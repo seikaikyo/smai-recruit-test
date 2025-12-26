@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="cupcake">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMAI 測驗管理後台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.22/dist/full.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <style>
+        [v-cloak] { display: none; }
+        body { background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%); min-height: 100vh; }
+        .personality-bar { height: 8px; border-radius: 4px; background: #e0e0e0; }
+        .personality-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    </style>
+</head>
+<body>
+<div id="app" v-cloak class="min-h-screen">
+    <!-- Login -->
+    <div v-if="!isLoggedIn" class="flex items-center justify-center min-h-screen">
+        <div class="card bg-base-100 shadow-xl w-96">
+            <div class="card-body">
+                <h2 class="card-title justify-center mb-4">SMAI 測驗管理後台</h2>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">管理密碼</span></label>
+                    <input type="password" v-model="password" @keyup.enter="login" class="input input-bordered" placeholder="請輸入密碼">
+                </div>
+                <div v-if="loginError" class="text-error text-sm mt-2">{{ loginError }}</div>
+                <button class="btn btn-primary mt-4" @click="login">登入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div v-else class="p-6">
+        <div class="navbar bg-base-100 rounded-box shadow mb-6">
+            <div class="flex-1">
+                <span class="text-xl font-bold">SMAI 測驗管理後台</span>
+            </div>
+            <div class="flex-none gap-2">
+                <select v-model="filterStatus" class="select select-bordered select-sm">
+                    <option value="">全部狀態</option>
+                    <option value="pending">待審核</option>
+                    <option value="passed">通過</option>
+                    <option value="rejected">不通過</option>
+                </select>
+                <select v-model="filterPosition" class="select select-bordered select-sm">
+                    <option value="">全部職位</option>
+                    <option v-for="pos in positions" :value="pos">{{ pos }}</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" @click="fetchResults">重新整理</button>
+                <button class="btn btn-ghost btn-sm" @click="logout">登出</button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div v-if="loading" class="text-center py-12">
+            <span class="loading loading-spinner loading-lg"></span>
+            <p class="mt-2">載入中...</p>
+        </div>
+
+        <!-- Results Table -->
+        <div v-else class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>姓名</th>
+                                <th>職位</th>
+                                <th>分數</th>
+                                <th>行為模式</th>
+                                <th>狀態</th>
+                                <th>提交時間</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="result in filteredResults" :key="result.id" class="hover">
+                                <td>
+                                    <div class="font-bold">{{ result.name }}</div>
+                                    <div class="text-sm opacity-50">{{ result.email }}</div>
+                                </td>
+                                <td>{{ result.position }}</td>
+                                <td>
+                                    <span class="font-mono">{{ result.choice_score }}/{{ result.total_choice }}</span>
+                                    <div class="text-xs opacity-50">{{ Math.round(result.choice_score / result.total_choice * 100) }}%</div>
+                                </td>
+                                <td>
+                                    <span class="badge" :class="getBehaviorClass(result.behavior_pattern)">
+                                        {{ getBehaviorLabel(result.behavior_pattern) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge" :class="getStatusClass(result.status)">
+                                        {{ getStatusLabel(result.status) }}
+                                    </span>
+                                </td>
+                                <td class="text-sm">{{ result.created_at }}</td>
+                                <td>
+                                    <button class="btn btn-ghost btn-xs" @click="viewDetail(result.id)">查看</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div v-if="filteredResults.length === 0" class="text-center py-8 opacity-50">
+                    目前沒有測驗結果
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <dialog ref="detailModal" class="modal">
+        <div class="modal-box max-w-4xl max-h-[90vh]">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">X</button>
+            </form>
+
+            <div v-if="selectedResult">
+                <h3 class="font-bold text-lg mb-4">{{ selectedResult.name }} - {{ selectedResult.position }}</h3>
+
+                <!-- 基本資訊 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="stat bg-base-200 rounded-lg p-3">
+                        <div class="stat-title text-xs">選擇題分數</div>
+                        <div class="stat-value text-lg">{{ selectedResult.choice_score }}/{{ selectedResult.total_choice }}</div>
+                    </div>
+                    <div class="stat bg-base-200 rounded-lg p-3">
+                        <div class="stat-title text-xs">平均回答時間</div>
+                        <div class="stat-value text-lg">{{ selectedResult.avg_response_time?.toFixed(1) || '-' }}s</div>
+                    </div>
+                    <div class="stat bg-base-200 rounded-lg p-3">
+                        <div class="stat-title text-xs">修改答案次數</div>
+                        <div class="stat-value text-lg">{{ selectedResult.answer_change_count || 0 }}</div>
+                    </div>
+                    <div class="stat bg-base-200 rounded-lg p-3">
+                        <div class="stat-title text-xs">行為模式</div>
+                        <div class="stat-value text-lg">{{ getBehaviorLabel(selectedResult.behavior_pattern) }}</div>
+                    </div>
+                </div>
+
+                <!-- 人格特質分析 -->
+                <div v-if="selectedResult.personality_analysis" class="mb-6">
+                    <h4 class="font-bold mb-3">人格特質分析</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div v-for="(trait, key) in selectedResult.personality_analysis" :key="key" class="p-3 bg-base-200 rounded-lg">
+                            <div class="text-sm font-medium mb-1">{{ trait.label }}</div>
+                            <div class="personality-bar">
+                                <div class="personality-fill" :style="{ width: trait.percentage + '%', background: trait.percentage >= 80 ? '#4ade80' : trait.percentage >= 50 ? '#fbbf24' : '#f87171' }"></div>
+                            </div>
+                            <div class="text-xs mt-1 opacity-70">{{ trait.score }}/{{ trait.total }} ({{ trait.percentage }}%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 答題紀錄 -->
+                <div class="mb-6">
+                    <h4 class="font-bold mb-3">答題紀錄</h4>
+                    <div class="space-y-2 max-h-60 overflow-y-auto">
+                        <div v-for="(ans, idx) in selectedResult.answers" :key="idx"
+                            class="collapse collapse-arrow bg-base-200">
+                            <input type="checkbox">
+                            <div class="collapse-title text-sm font-medium flex items-center gap-2">
+                                <span class="badge badge-sm" :class="ans.correct === true ? 'badge-success' : ans.correct === false ? 'badge-error' : 'badge-ghost'">
+                                    {{ ans.correct === true ? '正確' : ans.correct === false ? '錯誤' : '待審' }}
+                                </span>
+                                {{ ans.question?.substring(0, 50) }}...
+                            </div>
+                            <div class="collapse-content text-sm">
+                                <p><strong>題目：</strong>{{ ans.question }}</p>
+                                <p class="mt-2"><strong>答案：</strong></p>
+                                <pre class="whitespace-pre-wrap bg-base-300 p-2 rounded mt-1">{{ ans.answer }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 進階挑戰題 -->
+                <div v-if="selectedResult.challenge_answers?.length" class="mb-6">
+                    <h4 class="font-bold mb-3">進階挑戰題（AI 生成）</h4>
+                    <div class="space-y-2">
+                        <div v-for="(ans, idx) in selectedResult.challenge_answers" :key="idx"
+                            class="collapse collapse-arrow bg-secondary/10">
+                            <input type="checkbox">
+                            <div class="collapse-title text-sm font-medium">
+                                <span class="badge badge-secondary badge-sm mr-2">挑戰 {{ idx + 1 }}</span>
+                                {{ ans.question?.substring(0, 50) }}...
+                            </div>
+                            <div class="collapse-content text-sm">
+                                <p><strong>題目：</strong>{{ ans.question }}</p>
+                                <p class="mt-2"><strong>答案：</strong></p>
+                                <pre class="whitespace-pre-wrap bg-base-300 p-2 rounded mt-1">{{ ans.answer }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 審核 -->
+                <div class="border-t pt-4">
+                    <h4 class="font-bold mb-3">審核操作</h4>
+                    <div class="form-control mb-4">
+                        <label class="label"><span class="label-text">備註</span></label>
+                        <textarea v-model="reviewNotes" class="textarea textarea-bordered" rows="2" placeholder="輸入審核備註..."></textarea>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="btn btn-success" @click="updateStatus('passed')">通過</button>
+                        <button class="btn btn-error" @click="updateStatus('rejected')">不通過</button>
+                        <button class="btn btn-ghost" @click="updateStatus('reviewed')">標記已審</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+</div>
+
+<script>
+const { createApp, ref, computed, onMounted } = Vue;
+
+createApp({
+    setup() {
+        const API_URL = 'https://smai-mcp-center.onrender.com/api/recruit';
+        const ADMIN_PASSWORD = 'smai2024'; // 簡單密碼，生產環境應改用更安全的方式
+
+        const isLoggedIn = ref(false);
+        const password = ref('');
+        const loginError = ref('');
+        const loading = ref(false);
+        const results = ref([]);
+        const filterStatus = ref('');
+        const filterPosition = ref('');
+        const selectedResult = ref(null);
+        const reviewNotes = ref('');
+        const detailModal = ref(null);
+
+        const positions = computed(() => {
+            const posSet = new Set(results.value.map(r => r.position));
+            return Array.from(posSet);
+        });
+
+        const filteredResults = computed(() => {
+            return results.value.filter(r => {
+                if (filterStatus.value && r.status !== filterStatus.value) return false;
+                if (filterPosition.value && r.position !== filterPosition.value) return false;
+                return true;
+            });
+        });
+
+        const login = () => {
+            if (password.value === ADMIN_PASSWORD) {
+                isLoggedIn.value = true;
+                loginError.value = '';
+                localStorage.setItem('smai_kanri_auth', 'true');
+                fetchResults();
+            } else {
+                loginError.value = '密碼錯誤';
+            }
+        };
+
+        const logout = () => {
+            isLoggedIn.value = false;
+            password.value = '';
+            localStorage.removeItem('smai_kanri_auth');
+        };
+
+        const fetchResults = async () => {
+            loading.value = true;
+            try {
+                const res = await fetch(`${API_URL}/results`);
+                const data = await res.json();
+                if (data.success) {
+                    results.value = data.data;
+                }
+            } catch (err) {
+                console.error('Failed to fetch results:', err);
+            } finally {
+                loading.value = false;
+            }
+        };
+
+        const viewDetail = async (id) => {
+            try {
+                const res = await fetch(`${API_URL}/results/${id}`);
+                const data = await res.json();
+                if (data.success) {
+                    selectedResult.value = data.data;
+                    reviewNotes.value = data.data.reviewer_notes || '';
+                    detailModal.value?.showModal();
+                }
+            } catch (err) {
+                console.error('Failed to fetch detail:', err);
+            }
+        };
+
+        const updateStatus = async (status) => {
+            if (!selectedResult.value) return;
+            try {
+                const res = await fetch(`${API_URL}/results/${selectedResult.value.id}/review`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status,
+                        reviewer_notes: reviewNotes.value
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    detailModal.value?.close();
+                    fetchResults();
+                }
+            } catch (err) {
+                console.error('Failed to update status:', err);
+            }
+        };
+
+        const getStatusClass = (status) => {
+            switch (status) {
+                case 'passed': return 'badge-success';
+                case 'rejected': return 'badge-error';
+                case 'reviewed': return 'badge-info';
+                default: return 'badge-warning';
+            }
+        };
+
+        const getStatusLabel = (status) => {
+            switch (status) {
+                case 'passed': return '通過';
+                case 'rejected': return '不通過';
+                case 'reviewed': return '已審核';
+                default: return '待審核';
+            }
+        };
+
+        const getBehaviorClass = (pattern) => {
+            switch (pattern) {
+                case 'expert': return 'badge-success';
+                case 'careful': return 'badge-info';
+                case 'rushing': return 'badge-warning';
+                case 'hesitant': return 'badge-ghost';
+                default: return 'badge-ghost';
+            }
+        };
+
+        const getBehaviorLabel = (pattern) => {
+            switch (pattern) {
+                case 'expert': return '專家型';
+                case 'careful': return '謹慎型';
+                case 'rushing': return '快速型';
+                case 'hesitant': return '猶豫型';
+                default: return '-';
+            }
+        };
+
+        onMounted(() => {
+            if (localStorage.getItem('smai_kanri_auth') === 'true') {
+                isLoggedIn.value = true;
+                fetchResults();
+            }
+        });
+
+        return {
+            isLoggedIn,
+            password,
+            loginError,
+            loading,
+            results,
+            filterStatus,
+            filterPosition,
+            positions,
+            filteredResults,
+            selectedResult,
+            reviewNotes,
+            detailModal,
+            login,
+            logout,
+            fetchResults,
+            viewDetail,
+            updateStatus,
+            getStatusClass,
+            getStatusLabel,
+            getBehaviorClass,
+            getBehaviorLabel
+        };
+    }
+}).mount('#app');
+</script>
+</body>
+</html>

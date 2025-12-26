@@ -639,8 +639,8 @@
                         <input type="text" v-model="userName" :placeholder="randomStar" class="input input-bordered">
                     </div>
                     <div class="form-control">
-                        <label class="label"><span class="label-text font-medium">Email</span></label>
-                        <input type="email" v-model="userEmail" placeholder="email@example.com" class="input input-bordered">
+                        <label class="label"><span class="label-text font-medium">Email *</span></label>
+                        <input type="email" v-model="userEmail" placeholder="email@example.com" class="input input-bordered" required>
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text font-medium">電話</span></label>
@@ -683,7 +683,7 @@
                 </div>
 
                 <div class="card-actions justify-end">
-                    <button class="btn btn-primary" :disabled="!userName || !selectedPosition" @click="startTest">
+                    <button class="btn btn-primary" :disabled="!userName || !userEmail || !selectedPosition" @click="startTest">
                         開始測驗
                     </button>
                 </div>
