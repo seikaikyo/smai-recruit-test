@@ -2114,14 +2114,14 @@ jobs:
       - uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/${{ github.repository }}:staging
+          tags: ghcr.io/\${{ github.repository }}:staging
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Render/Vercel
-        run: curl -X POST ${{ secrets.DEPLOY_WEBHOOK }}
+        run: curl -X POST \${{ secrets.DEPLOY_WEBHOOK }}
 
 為什麼這樣設計：
 - test 失敗就不會建置
