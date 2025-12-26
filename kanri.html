@@ -325,13 +325,26 @@ createApp({
             userAvatar.value = '';
         };
 
+        // 取得認證 headers
+        const getAuthHeaders = async () => {
+            const token = await clerk?.session?.getToken();
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : ''
+            };
+        };
+
         const fetchResults = async () => {
             loading.value = true;
             try {
-                const res = await fetch(`${API_URL}/results`);
+                const headers = await getAuthHeaders();
+                const res = await fetch(`${API_URL}/results`, { headers });
                 const data = await res.json();
                 if (data.success) {
                     results.value = data.data;
+                } else if (res.status === 401 || res.status === 403) {
+                    loginError.value = '認證已過期，請重新登入';
+                    logout();
                 }
             } catch (err) {
                 console.error('Failed to fetch results:', err);
@@ -342,7 +355,8 @@ createApp({
 
         const viewDetail = async (id) => {
             try {
-                const res = await fetch(`${API_URL}/results/${id}`);
+                const headers = await getAuthHeaders();
+                const res = await fetch(`${API_URL}/results/${id}`, { headers });
                 const data = await res.json();
                 if (data.success) {
                     selectedResult.value = data.data;
@@ -357,9 +371,10 @@ createApp({
         const updateStatus = async (status) => {
             if (!selectedResult.value) return;
             try {
+                const headers = await getAuthHeaders();
                 const res = await fetch(`${API_URL}/results/${selectedResult.value.id}/review`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify({
                         status,
                         reviewer_notes: reviewNotes.value
