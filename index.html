@@ -12,7 +12,7 @@
         [v-cloak] { display: none; }
 
         /* 主題系統 - 日系莫蘭迪風格 */
-        :root {
+        :root, html, html[data-theme="caramel"] {
             /* 焦糖奶茶 (預設) */
             --primary-light: #C4A77D;
             --primary-dark: #8B7355;
@@ -23,42 +23,46 @@
             --accent-pink: #E8C4C4;
             --accent-green: #B4C4AE;
             --accent-blue: #A8C5D9;
+            --accent-yellow: #F5E6C8;
         }
 
-        [data-theme="matcha"] {
+        html[data-theme="matcha"], html[data-theme="matcha"] body {
             --primary-light: #9DB4A0;
             --primary-dark: #6B8E6B;
             --primary-text: #3D5A3D;
-            --bg-cream: #F5F9F5;
-            --bg-light: #E8F0E8;
-            --bg-medium: #D4E4D4;
+            --bg-cream: #F0F5F0;
+            --bg-light: #E0EBE0;
+            --bg-medium: #C8D8C8;
             --accent-pink: #E8D4D4;
             --accent-green: #A8C4A8;
             --accent-blue: #B4D4E0;
+            --accent-yellow: #E8F0D8;
         }
 
-        [data-theme="sakura"] {
-            --primary-light: #E8B4B4;
-            --primary-dark: #C48888;
+        html[data-theme="sakura"], html[data-theme="sakura"] body {
+            --primary-light: #DDA0A0;
+            --primary-dark: #C07070;
             --primary-text: #6B4444;
-            --bg-cream: #FDF8F8;
-            --bg-light: #F9ECEC;
-            --bg-medium: #F0E0E0;
+            --bg-cream: #FFF5F5;
+            --bg-light: #FFE8E8;
+            --bg-medium: #F8D0D0;
             --accent-pink: #F0C4C4;
             --accent-green: #C4D8C4;
-            --accent-blue: #C4D4E8;
+            --accent-blue: #D4D4E8;
+            --accent-yellow: #F8E8D8;
         }
 
-        [data-theme="fuji"] {
-            --primary-light: #B4A8C4;
-            --primary-dark: #887898;
+        html[data-theme="fuji"], html[data-theme="fuji"] body {
+            --primary-light: #A898B8;
+            --primary-dark: #806090;
             --primary-text: #4A4058;
-            --bg-cream: #FAF8FC;
-            --bg-light: #F0ECF4;
-            --bg-medium: #E4DEE8;
+            --bg-cream: #F8F5FC;
+            --bg-light: #EDE8F4;
+            --bg-medium: #D8D0E0;
             --accent-pink: #E0C8D8;
-            --accent-green: #C0D0C0;
-            --accent-blue: #C8D0E0;
+            --accent-green: #C8D8C8;
+            --accent-blue: #C8D0E8;
+            --accent-yellow: #E8E0F0;
         }
 
         /* 全域過渡動畫 */
@@ -162,7 +166,7 @@
             border-radius: 12px !important;
         }
         .alert-warning {
-            background: linear-gradient(135deg, #F5E6C8, #EDD9B5) !important;
+            background: linear-gradient(135deg, var(--accent-yellow), var(--bg-medium)) !important;
             border: none !important;
             color: var(--primary-text) !important;
             border-radius: 12px !important;
@@ -232,7 +236,7 @@
             border-radius: 8px !important;
         }
         .badge-info { background: var(--accent-blue) !important; }
-        .badge-warning { background: #F5E6C8 !important; }
+        .badge-warning { background: var(--accent-yellow) !important; }
         .badge-error { background: var(--accent-pink) !important; }
         .badge-success { background: var(--accent-green) !important; }
         .badge-neutral { background: var(--bg-medium) !important; }
