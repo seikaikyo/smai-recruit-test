@@ -7,6 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.22/dist/full.min.css" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script
+      async
+      crossorigin="anonymous"
+      data-clerk-publishable-key="pk_test_Y2xvc2UtZmxvdW5kZXItNzEuY2xlcmsuYWNjb3VudHMuZGV2JA"
+      src="https://close-flounder-71.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+      type="text/javascript"
+    ></script>
     <style>
         [v-cloak] { display: none; }
         body { background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%); min-height: 100vh; }
@@ -16,19 +23,20 @@
 </head>
 <body>
 <div id="app" v-cloak class="min-h-screen">
+    <!-- Loading Clerk -->
+    <div v-if="clerkLoading" class="flex items-center justify-center min-h-screen">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+
     <!-- Login -->
-    <div v-if="!isLoggedIn" class="flex items-center justify-center min-h-screen">
+    <div v-else-if="!isLoggedIn" class="flex items-center justify-center min-h-screen">
         <div class="card bg-base-100 shadow-xl w-96">
-            <div class="card-body">
+            <div class="card-body text-center">
                 <h2 class="card-title justify-center mb-4">SMAI 測驗管理後台</h2>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">管理密碼</span></label>
-                    <input type="password" v-model="password" @keyup.enter="login" class="input input-bordered" placeholder="請輸入密碼">
-                </div>
-                <div v-if="loginError" class="text-error text-sm mt-2">{{ loginError }}</div>
-                <button class="btn btn-primary mt-4" @click="login" :disabled="loginLoading">
-                    <span v-if="loginLoading" class="loading loading-spinner loading-sm"></span>
-                    {{ loginLoading ? '驗證中...' : '登入' }}
+                <p class="text-sm opacity-70 mb-4">請使用公司帳號登入</p>
+                <div v-if="loginError" class="alert alert-error text-sm mb-4">{{ loginError }}</div>
+                <button class="btn btn-primary" @click="login">
+                    登入
                 </button>
             </div>
         </div>
@@ -39,7 +47,11 @@
         <div class="bg-base-100 rounded-box shadow mb-6 p-4">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <span class="text-xl font-bold">SMAI 測驗管理後台</span>
-                <div class="flex gap-2">
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 text-sm opacity-70">
+                        <img v-if="userAvatar" :src="userAvatar" class="w-6 h-6 rounded-full">
+                        <span>{{ userEmail }}</span>
+                    </div>
                     <button class="btn btn-ghost btn-sm" @click="fetchResults">重新整理</button>
                     <button class="btn btn-ghost btn-sm" @click="logout">登出</button>
                 </div>
@@ -244,14 +256,21 @@
 <script>
 const { createApp, ref, computed, onMounted } = Vue;
 
+// 允許的管理員 email（可改為從後端 API 驗證）
+const ALLOWED_ADMINS = [
+    'dash@smai.com.tw',
+    'admin@smai.com.tw'
+];
+
 createApp({
     setup() {
         const API_URL = 'https://smai-mcp-center.onrender.com/api/recruit';
 
+        const clerkLoading = ref(true);
         const isLoggedIn = ref(false);
-        const password = ref('');
         const loginError = ref('');
-        const loginLoading = ref(false);
+        const userEmail = ref('');
+        const userAvatar = ref('');
         const loading = ref(false);
         const results = ref([]);
         const filterStatus = ref('');
@@ -259,6 +278,8 @@ createApp({
         const selectedResult = ref(null);
         const reviewNotes = ref('');
         const detailModal = ref(null);
+
+        let clerk = null;
 
         const positions = computed(() => {
             const posSet = new Set(results.value.map(r => r.position));
@@ -273,34 +294,37 @@ createApp({
             });
         });
 
-        const login = async () => {
-            loginLoading.value = true;
-            loginError.value = '';
-            try {
-                const res = await fetch(`${API_URL}/auth`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password: password.value })
-                });
-                if (res.ok) {
-                    isLoggedIn.value = true;
-                    localStorage.setItem('smai_kanri_auth', 'true');
-                    fetchResults();
-                } else {
-                    const data = await res.json();
-                    loginError.value = data.detail || '密碼錯誤';
-                }
-            } catch (err) {
-                loginError.value = '連線失敗，請稍後再試';
-            } finally {
-                loginLoading.value = false;
+        const checkAuth = () => {
+            if (!clerk?.user) {
+                isLoggedIn.value = false;
+                return;
+            }
+            const email = clerk.user.primaryEmailAddress?.emailAddress || '';
+            if (ALLOWED_ADMINS.includes(email)) {
+                isLoggedIn.value = true;
+                userEmail.value = email;
+                userAvatar.value = clerk.user.imageUrl || '';
+                fetchResults();
+            } else {
+                loginError.value = `${email} 無管理權限`;
+                clerk.signOut();
             }
         };
 
-        const logout = () => {
+        const login = async () => {
+            loginError.value = '';
+            try {
+                await clerk.openSignIn();
+            } catch (err) {
+                loginError.value = '登入失敗';
+            }
+        };
+
+        const logout = async () => {
+            await clerk?.signOut();
             isLoggedIn.value = false;
-            password.value = '';
-            localStorage.removeItem('smai_kanri_auth');
+            userEmail.value = '';
+            userAvatar.value = '';
         };
 
         const fetchResults = async () => {
@@ -391,18 +415,41 @@ createApp({
             }
         };
 
-        onMounted(() => {
-            if (localStorage.getItem('smai_kanri_auth') === 'true') {
-                isLoggedIn.value = true;
-                fetchResults();
+        onMounted(async () => {
+            // 等待 Clerk 載入
+            await new Promise(resolve => {
+                if (window.Clerk) {
+                    resolve();
+                } else {
+                    window.addEventListener('clerk:loaded', resolve);
+                }
+            });
+
+            clerk = window.Clerk;
+            await clerk.load();
+
+            // 監聽登入狀態變化
+            clerk.addListener(({ user }) => {
+                clerkLoading.value = false;
+                if (user) {
+                    checkAuth();
+                } else {
+                    isLoggedIn.value = false;
+                }
+            });
+
+            clerkLoading.value = false;
+            if (clerk.user) {
+                checkAuth();
             }
         });
 
         return {
+            clerkLoading,
             isLoggedIn,
-            password,
             loginError,
-            loginLoading,
+            userEmail,
+            userAvatar,
             loading,
             results,
             filterStatus,
