@@ -682,14 +682,14 @@
                     </div>
 
                     <!-- Navigation -->
-                    <div class="card-actions justify-between mt-6">
-                        <button class="btn btn-ghost" :disabled="currentQuestionIndex === 0" @click="prevQuestion">
+                    <div class="card-actions flex-col sm:flex-row justify-between gap-2 mt-6">
+                        <button class="btn btn-ghost w-full sm:w-auto order-2 sm:order-1" :disabled="currentQuestionIndex === 0" @click="prevQuestion">
                             上一題
                         </button>
-                        <button v-if="currentQuestionIndex < currentQuestions.length - 1" class="btn btn-primary" @click="nextQuestion">
+                        <button v-if="currentQuestionIndex < currentQuestions.length - 1" class="btn btn-primary w-full sm:w-auto order-1 sm:order-2" @click="nextQuestion">
                             下一題
                         </button>
-                        <button v-else class="btn btn-success" @click="submitTest">
+                        <button v-else class="btn btn-success w-full sm:w-auto order-1 sm:order-2" @click="submitTest">
                             提交測驗
                         </button>
                     </div>
@@ -746,6 +746,10 @@
                             <p v-if="q.type === 'choice'" class="text-sm text-success mt-1">
                                 <strong>正確答案：</strong>{{ q.options[q.answer] }}
                             </p>
+                            <div v-if="q.referenceAnswer" class="mt-3 p-3 rounded-lg" style="background: var(--accent-green); opacity: 0.9;">
+                                <p class="font-medium text-sm mb-1" style="color: var(--primary-text);">參考答案：</p>
+                                <pre class="text-xs whitespace-pre-wrap" style="color: var(--primary-text);">{{ q.referenceAnswer }}</pre>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1050,7 +1054,17 @@ createApp({
                 type: 'implement',
                 difficulty: '中等',
                 category: 'Claude Code',
-                question: '請描述你會如何使用 Claude Code（或其他 AI 工具）來協助開發一個新功能？從理解需求到完成實作的流程是什麼？請具體說明你會怎麼下 prompt、如何驗證 AI 產出的程式碼。'
+                question: '請描述你會如何使用 Claude Code（或其他 AI 工具）來協助開發一個新功能？從理解需求到完成實作的流程是什麼？請具體說明你會怎麼下 prompt、如何驗證 AI 產出的程式碼。',
+                referenceAnswer: `參考答案重點：
+1. 理解需求階段：先閱讀文件/PRD，用 AI 協助釐清模糊需求
+2. 拆分任務：將大功能拆成小任務，每次給 AI 明確的小範圍
+3. 提示技巧：提供上下文（現有程式碼結構）、明確輸入輸出、說明限制條件
+4. 驗證方式：
+   - 閱讀並理解 AI 產出的程式碼（不是直接複製貼上）
+   - 檢查邊界條件和錯誤處理
+   - 實際執行測試
+   - Code review 後再 commit
+5. 迭代改進：根據測試結果，請 AI 修正特定問題`
             },
             {
                 type: 'review',
@@ -1064,6 +1078,28 @@ function validateUser(input) {
         return { valid: true, user }
     }
     return { valid: false }
+}`,
+                referenceAnswer: `主要問題：
+1. JSON.parse 沒有 try-catch，無效 JSON 會拋出例外
+2. user.email 可能不存在，會導致 undefined.includes() 錯誤
+3. Email 驗證過於簡單，只檢查 @ 符號
+4. 沒有檢查 user 物件是否為 null
+
+改進方式：
+function validateUser(input) {
+    try {
+        const user = JSON.parse(input)
+        if (!user || typeof user.email !== 'string') {
+            return { valid: false, error: '無效的用戶資料' }
+        }
+        const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/
+        if (!emailRegex.test(user.email)) {
+            return { valid: false, error: 'Email 格式不正確' }
+        }
+        return { valid: true, user }
+    } catch (e) {
+        return { valid: false, error: '無效的 JSON 格式' }
+    }
 }`
             }
         ];
@@ -1111,12 +1147,42 @@ const doubled = count.value * 2  // 希望是響應式的雙倍值
 
 function increment() {
     count = count.value + 1
+}`,
+                    referenceAnswer: `問題：
+1. doubled 只計算一次，不是響應式的（應該用 computed）
+2. increment 中直接賦值給 count，應該用 count.value
+
+修正：
+const count = ref(0)
+const doubled = computed(() => count.value * 2)
+
+function increment() {
+    count.value++  // 或 count.value = count.value + 1
 }`
                 },
                 {
                     type: 'implement',
                     difficulty: '進階',
-                    question: '請實作一個 Vue 3 composable 函數 useDebounce(value, delay)，將輸入值防抖處理。說明你的實作思路。'
+                    question: '請實作一個 Vue 3 composable 函數 useDebounce(value, delay)，將輸入值防抖處理。說明你的實作思路。',
+                    referenceAnswer: `import { ref, watch } from 'vue'
+
+export function useDebounce(value, delay = 300) {
+    const debouncedValue = ref(value.value)
+    let timer = null
+
+    watch(value, (newVal) => {
+        if (timer) clearTimeout(timer)
+        timer = setTimeout(() => {
+            debouncedValue.value = newVal
+        }, delay)
+    })
+
+    return debouncedValue
+}
+
+// 使用方式：
+// const searchText = ref('')
+// const debouncedSearch = useDebounce(searchText, 500)`
                 }
             ],
             fullstack: [
@@ -1162,12 +1228,46 @@ for (const user of users) {
         where: { userId: user.id }
     })
     user.orders = orders
-}`
+}`,
+                    referenceAnswer: `問題：N+1 查詢問題
+- 第一次查詢所有用戶（1 次）
+- 每個用戶再查一次訂單（N 次）
+- 若有 100 個用戶，就會執行 101 次查詢
+
+優化方式：使用 Prisma 的 include 關聯查詢
+const users = await prisma.user.findMany({
+    include: {
+        orders: true
+    }
+})
+// 只需 1 次查詢，Prisma 會用 JOIN 或子查詢處理`
                 },
                 {
                     type: 'implement',
                     difficulty: '進階',
-                    question: '請設計一個 RESTful API 端點來處理分頁查詢，需支援排序、篩選功能。說明 URL 設計和回傳格式。'
+                    question: '請設計一個 RESTful API 端點來處理分頁查詢，需支援排序、篩選功能。說明 URL 設計和回傳格式。',
+                    referenceAnswer: `URL 設計：
+GET /api/products?page=1&limit=20&sort=price:desc&filter[category]=electronics
+
+回傳格式：
+{
+    "success": true,
+    "data": [...],
+    "pagination": {
+        "page": 1,
+        "limit": 20,
+        "total": 150,
+        "totalPages": 8,
+        "hasNext": true,
+        "hasPrev": false
+    }
+}
+
+重點：
+1. 分頁用 page + limit（或 offset）
+2. 排序用 sort=field:direction
+3. 篩選用 filter[field]=value
+4. 回傳 total 讓前端知道總筆數`
                 }
             ],
             angular: [
@@ -1221,12 +1321,54 @@ export class UserComponent {
     ngOnInit() {
         console.log(this.user.name);  // 可能出錯
     }
+}`,
+                    referenceAnswer: `問題：
+1. @Input() user 在 ngOnInit 時可能還沒有值（undefined）
+2. 應該用 ngOnChanges 或設定初始值
+
+修正方式 1：使用 required input (Angular 16+)
+@Input({ required: true }) user!: User;
+
+修正方式 2：用 ngOnChanges
+ngOnChanges(changes: SimpleChanges) {
+    if (changes['user']?.currentValue) {
+        console.log(this.user.name);
+    }
+}
+
+修正方式 3：用 setter
+private _user: User;
+@Input() set user(value: User) {
+    this._user = value;
+    if (value) console.log(value.name);
 }`
                 },
                 {
                     type: 'implement',
                     difficulty: '進階',
-                    question: '請說明如何在 Angular 中實作一個可重用的確認對話框服務 (ConfirmationService)，支援 Promise-based API。'
+                    question: '請說明如何在 Angular 中實作一個可重用的確認對話框服務 (ConfirmationService)，支援 Promise-based API。',
+                    referenceAnswer: `// confirmation.service.ts
+@Injectable({ providedIn: 'root' })
+export class ConfirmationService {
+    constructor(private dialog: MatDialog) {}  // 或用 PrimeNG
+
+    confirm(message: string, title = '確認'): Promise<boolean> {
+        const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+            data: { title, message }
+        });
+        return firstValueFrom(dialogRef.afterClosed());
+    }
+}
+
+// 使用方式：
+async deleteItem() {
+    const confirmed = await this.confirmService.confirm(
+        '確定要刪除此項目嗎？'
+    );
+    if (confirmed) {
+        // 執行刪除
+    }
+}`
                 }
             ],
             python: [
@@ -1269,12 +1411,59 @@ export class UserComponent {
 async def get_user(user_id: str, db: Session = Depends(get_db)):
     query = f"SELECT * FROM users WHERE id = '{user_id}'"
     result = db.execute(query)
-    return result.fetchone()`
+    return result.fetchone()`,
+                    referenceAnswer: `問題：SQL Injection 漏洞
+攻擊者可以輸入: 1' OR '1'='1
+變成: SELECT * FROM users WHERE id = '1' OR '1'='1'
+會取得所有用戶資料
+
+修正方式：使用參數化查詢
+from sqlalchemy import text
+
+@app.get("/users/{user_id}")
+async def get_user(user_id: str, db: Session = Depends(get_db)):
+    query = text("SELECT * FROM users WHERE id = :user_id")
+    result = db.execute(query, {"user_id": user_id})
+    return result.fetchone()
+
+更好的方式：使用 ORM
+user = db.query(User).filter(User.id == user_id).first()`
                 },
                 {
                     type: 'implement',
                     difficulty: '進階',
-                    question: '請實作一個 FastAPI 的 BackgroundTasks 範例，用於在 API 回應後異步發送 Email。說明為什麼要用 BackgroundTasks 而不是直接等待。'
+                    question: '請實作一個 FastAPI 的 BackgroundTasks 範例，用於在 API 回應後異步發送 Email。說明為什麼要用 BackgroundTasks 而不是直接等待。',
+                    referenceAnswer: `from fastapi import BackgroundTasks
+
+def send_email(email: str, subject: str, body: str):
+    # 模擬耗時的 Email 發送
+    import time
+    time.sleep(3)  # SMTP 連線、發送可能要幾秒
+    print(f"Email sent to {email}")
+
+@app.post("/register")
+async def register(
+    user: UserCreate,
+    background_tasks: BackgroundTasks
+):
+    # 1. 建立用戶（快速完成）
+    new_user = create_user(user)
+
+    # 2. 背景發送歡迎信（不阻塞回應）
+    background_tasks.add_task(
+        send_email,
+        user.email,
+        "歡迎加入",
+        "感謝您的註冊..."
+    )
+
+    # 3. 立即回應（不等 Email）
+    return {"message": "註冊成功", "user_id": new_user.id}
+
+為什麼用 BackgroundTasks：
+- API 回應更快（不等 Email）
+- 用戶體驗更好
+- Email 失敗不影響註冊結果`
                 }
             ],
             ai: [
@@ -1325,12 +1514,55 @@ while True:
     if not ret:
         break
     frames.append(frame)  # 儲存所有影格
-# 處理 frames...`
+# 處理 frames...`,
+                    referenceAnswer: `問題：記憶體溢出 (OOM)
+- 1080p 影格約 6MB
+- 30fps 影片 1 分鐘 = 1800 影格 = 10.8GB
+- 長影片會耗盡記憶體
+
+修正方式 1：邊讀邊處理
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+    process_frame(frame)  # 立即處理，不存
+
+修正方式 2：只存關鍵幀
+if frame_count % 30 == 0:  # 每秒取一幀
+    frames.append(frame)
+
+修正方式 3：用 generator
+def frame_generator(cap):
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        yield frame`
                 },
                 {
                     type: 'implement',
                     difficulty: '進階',
-                    question: '請說明如何用 YOLO 實作一個簡單的製程動作分段系統：給定一段作業員操作影片，如何偵測並標記不同的動作階段？'
+                    question: '請說明如何用 YOLO 實作一個簡單的製程動作分段系統：給定一段作業員操作影片，如何偵測並標記不同的動作階段？',
+                    referenceAnswer: `架構設計：
+1. 物件偵測層：用 YOLO 偵測人體/手部/工具
+2. 動作識別層：根據物件位置變化判斷動作
+3. 分段邏輯：狀態機判斷動作切換
+
+實作步驟：
+1. 訓練 YOLO 偵測：工具、產品、手部
+2. 追蹤物件軌跡（用 DeepSORT）
+3. 定義動作規則：
+   - 手接近工具 → 取料
+   - 工具接近產品 → 加工
+   - 手離開工具 → 放料
+4. 時間序列平滑（避免誤判）
+
+輸出格式：
+[
+    {"start": 0, "end": 5.2, "action": "取料"},
+    {"start": 5.2, "end": 12.8, "action": "加工"},
+    ...
+]`
                 }
             ],
             devops: [
@@ -1378,12 +1610,70 @@ while True:
 WORKDIR /app
 COPY . .
 RUN pip install -r requirements.txt
-CMD ["python", "app.py"]`
+CMD ["python", "app.py"]`,
+                    referenceAnswer: `改進點：
+1. 沒用 multi-stage build（映像檔太大）
+2. COPY . . 會複製不需要的檔案（應加 .dockerignore）
+3. requirements.txt 應該先複製（利用快取）
+4. 沒有指定 slim 版本
+
+優化版本：
+FROM python:3.12-slim AS builder
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+FROM python:3.12-slim
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY app.py .
+CMD ["python", "app.py"]
+
+重點：
+- 用 slim 版本減少大小
+- 分階段減少最終映像檔大小
+- 先複製 requirements.txt 利用快取`
                 },
                 {
                     type: 'implement',
                     difficulty: '進階',
-                    question: '請設計一個 CI/CD pipeline，當 push 到 main branch 時自動：1) 執行測試 2) 建置 Docker image 3) 部署到 staging 環境。說明你會用什麼工具和為什麼。'
+                    question: '請設計一個 CI/CD pipeline，當 push 到 main branch 時自動：1) 執行測試 2) 建置 Docker image 3) 部署到 staging 環境。說明你會用什麼工具和為什麼。',
+                    referenceAnswer: `工具選擇：GitHub Actions（與 GitHub 整合最好）
+
+.github/workflows/deploy.yml:
+name: Deploy to Staging
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install && npm test
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ghcr.io/${{ github.repository }}:staging
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Render/Vercel
+        run: curl -X POST ${{ secrets.DEPLOY_WEBHOOK }}
+
+為什麼這樣設計：
+- test 失敗就不會建置
+- 用 needs 確保順序
+- 用 secrets 保護敏感資訊`
                 }
             ],
             iot: [
@@ -1442,12 +1732,66 @@ CMD ["python", "app.py"]`
                     code: `mqtt in [broker]
   → function (每秒處理 100 筆)
     → http request (POST 到 API)
-// 問題：API 回應緩慢時會發生什麼？`
+// 問題：API 回應緩慢時會發生什麼？`,
+                    referenceAnswer: `問題：背壓 (Backpressure)
+- 每秒 100 筆 MQTT 訊息進來
+- 但 HTTP API 回應要 200ms
+- 5 秒後就會堆積 500 個待處理請求
+- 最終記憶體爆掉或訊息丟失
+
+改進方式：
+1. 批次處理：
+   delay node (rate limit: 10 msg/s)
+   → join node (combine 10 msgs)
+   → http request (batch POST)
+
+2. 加入佇列：
+   mqtt in → queue node → http request
+   （使用 node-red-contrib-queue-gate）
+
+3. 本地快取：
+   mqtt in → function (寫入 SQLite)
+   定時 → 批次送 API
+
+4. 監控警報：
+   監控 queue 長度，超過閾值發警報`
                 },
                 {
                     type: 'implement',
                     difficulty: '進階',
-                    question: '請設計一個工廠設備監控系統架構：如何從 PLC (Modbus) 擷取資料，經過邊緣運算 (WISE-IoT/EdgeLink)，最後呈現在網頁儀表板？請說明資料流和每層的技術選擇。'
+                    question: '請設計一個工廠設備監控系統架構：如何從 PLC (Modbus) 擷取資料，經過邊緣運算 (WISE-IoT/EdgeLink)，最後呈現在網頁儀表板？請說明資料流和每層的技術選擇。',
+                    referenceAnswer: `系統架構（由下到上）：
+
+1. 設備層 (Field Level)
+   - PLC: Siemens S7 / 三菱 / 歐姆龍
+   - 協議: Modbus TCP (最常見)
+   - 資料: 溫度、壓力、轉速、產量
+
+2. 邊緣層 (Edge Level)
+   - 硬體: 研華 ECU-4784 / UNO-2484G
+   - 軟體: EdgeLink (協議轉換)
+   - 功能:
+     * Modbus → MQTT 轉換
+     * 資料預處理（過濾雜訊）
+     * 本地快取（斷網續傳）
+
+3. 傳輸層 (Transport)
+   - 協議: MQTT (輕量、可靠)
+   - Broker: EMQX / Mosquitto
+   - 格式: JSON
+
+4. 應用層 (Application)
+   - 後端: FastAPI + PostgreSQL
+   - 時序資料: InfluxDB / TimescaleDB
+   - 前端: Vue 3 + ECharts
+
+5. 資料流:
+   PLC → Modbus TCP → EdgeLink → MQTT → API → DB → Dashboard
+
+關鍵設計：
+- 邊緣快取避免資料丟失
+- MQTT QoS 1 確保送達
+- 時序資料庫處理大量寫入`
                 }
             ]
         };
