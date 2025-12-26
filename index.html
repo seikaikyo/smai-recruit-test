@@ -10,63 +10,185 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         [v-cloak] { display: none; }
-        /* 日系莫蘭迪風格配色 */
-        [data-theme="cupcake"] {
-            --p: 15 40% 70%;     /* primary 溫暖奶茶色 */
-            --pf: 15 45% 60%;    /* primary focus */
-            --pc: 15 30% 20%;    /* primary content */
-            --s: 180 25% 75%;    /* secondary 淡灰藍 */
-            --sf: 180 30% 65%;
-            --sc: 180 20% 20%;
-            --a: 350 30% 75%;    /* accent 淡玫瑰 */
-            --af: 350 35% 65%;
-            --ac: 350 20% 20%;
-            --n: 30 10% 40%;     /* neutral 暖灰 */
-            --nf: 30 10% 30%;
-            --nc: 30 10% 95%;
-            --b1: 40 30% 97%;    /* base 奶油白 */
-            --b2: 40 25% 93%;
-            --b3: 40 20% 88%;
-            --bc: 30 15% 25%;    /* base content */
-            --in: 200 30% 70%;   /* info 柔和藍 */
-            --inc: 200 30% 20%;
-            --su: 150 30% 65%;   /* success 抹茶綠 */
-            --suc: 150 30% 20%;
-            --wa: 40 40% 75%;    /* warning 奶油黃 */
-            --wac: 40 30% 25%;
-            --er: 5 40% 70%;     /* error 柔和珊瑚 */
-            --erc: 5 30% 20%;
+
+        /* 日系莫蘭迪暖色系 */
+        :root {
+            --warm-cream: #FDF8F3;
+            --warm-beige: #F5EDE4;
+            --warm-tan: #E8DED3;
+            --warm-caramel: #C4A77D;
+            --warm-cocoa: #8B7355;
+            --warm-brown: #5D4E37;
+            --soft-pink: #E8C4C4;
+            --soft-sage: #B4C4AE;
+            --soft-sky: #A8C5D9;
         }
-        .code-block {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.875rem;
-            overflow-x: auto;
-            white-space: pre;
+
+        body {
+            background: linear-gradient(135deg, var(--warm-cream) 0%, var(--warm-beige) 100%);
+            color: var(--warm-brown);
         }
-        .keyword { color: #569cd6; }
-        .string { color: #ce9178; }
-        .comment { color: #6a9955; }
-        .function { color: #dcdcaa; }
-        /* Radio 選中狀態修復 */
+
+        /* Header 溫暖漸層 */
+        .navbar {
+            background: linear-gradient(90deg, var(--warm-caramel) 0%, var(--warm-cocoa) 100%) !important;
+            color: white !important;
+        }
+
+        /* 卡片樣式 */
+        .card {
+            background: white !important;
+            border: 1px solid var(--warm-tan) !important;
+            box-shadow: 0 4px 20px rgba(139, 115, 85, 0.1) !important;
+        }
+
+        /* 按鈕樣式 */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--warm-caramel) 0%, var(--warm-cocoa) 100%) !important;
+            border: none !important;
+            color: white !important;
+            transition: all 0.3s ease !important;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(196, 167, 125, 0.4) !important;
+        }
+        .btn-primary:disabled {
+            background: var(--warm-tan) !important;
+            opacity: 0.6;
+        }
+
+        /* Alert 樣式 */
+        .alert-info {
+            background: linear-gradient(135deg, var(--soft-sky) 0%, #C5D9E8 100%) !important;
+            border: none !important;
+            color: var(--warm-brown) !important;
+        }
+        .alert-warning {
+            background: linear-gradient(135deg, #F5E6C8 0%, #EDD9B5 100%) !important;
+            border: none !important;
+            color: var(--warm-brown) !important;
+        }
+
+        /* 進度條 */
+        .progress {
+            height: 12px !important;
+            background: var(--warm-tan) !important;
+            border-radius: 6px !important;
+            overflow: hidden !important;
+        }
+        .progress::-webkit-progress-bar {
+            background: var(--warm-tan);
+            border-radius: 6px;
+        }
+        .progress::-webkit-progress-value {
+            background: linear-gradient(90deg, var(--warm-caramel) 0%, var(--warm-cocoa) 100%);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+        }
+        .progress::-moz-progress-bar {
+            background: linear-gradient(90deg, var(--warm-caramel) 0%, var(--warm-cocoa) 100%);
+            border-radius: 6px;
+        }
+
+        /* Radio 選中狀態 */
         .radio {
             appearance: none;
             width: 1.25rem;
             height: 1.25rem;
-            border: 2px solid hsl(var(--bc) / 0.3);
+            border: 2px solid var(--warm-tan);
             border-radius: 50%;
             cursor: pointer;
             transition: all 0.2s;
+            background: white;
         }
         .radio:checked {
-            border-color: hsl(var(--p));
-            background: radial-gradient(circle, hsl(var(--p)) 40%, transparent 45%);
+            border-color: var(--warm-caramel);
+            background: radial-gradient(circle, var(--warm-caramel) 40%, white 45%);
         }
         .radio:hover {
-            border-color: hsl(var(--p));
+            border-color: var(--warm-caramel);
+        }
+
+        /* 選項卡片 */
+        .card.bg-base-200 {
+            background: var(--warm-beige) !important;
+            border: 2px solid transparent !important;
+            transition: all 0.2s ease !important;
+        }
+        .card.bg-base-200:hover {
+            background: var(--warm-tan) !important;
+            border-color: var(--warm-caramel) !important;
+        }
+        .card.ring-2 {
+            border-color: var(--warm-caramel) !important;
+            background: white !important;
+        }
+
+        /* Badge 標籤 */
+        .badge {
+            border: 1px solid var(--warm-tan) !important;
+            background: var(--warm-beige) !important;
+            color: var(--warm-brown) !important;
+        }
+        .badge-info { background: var(--soft-sky) !important; }
+        .badge-warning { background: #F5E6C8 !important; }
+        .badge-error { background: var(--soft-pink) !important; }
+        .badge-success { background: var(--soft-sage) !important; }
+        .badge-neutral { background: var(--warm-tan) !important; }
+        .badge-ghost { background: transparent !important; border: 1px dashed var(--warm-tan) !important; }
+
+        /* 輸入框 */
+        .input, .textarea {
+            border: 2px solid var(--warm-tan) !important;
+            background: white !important;
+            transition: all 0.2s ease !important;
+        }
+        .input:focus, .textarea:focus {
+            border-color: var(--warm-caramel) !important;
+            box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.2) !important;
+            outline: none !important;
+        }
+
+        /* 選項列表 hover */
+        label.flex:hover {
+            background: var(--warm-beige) !important;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--warm-tan) !important;
+            color: var(--warm-brown) !important;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #2D2A26;
+            color: #E8DED3;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            white-space: pre;
+            border: 1px solid var(--warm-cocoa);
+        }
+        .keyword { color: #C4A77D; }
+        .string { color: #E8C4C4; }
+        .comment { color: #B4C4AE; }
+        .function { color: #A8C5D9; }
+
+        /* Stats 統計 */
+        .stats {
+            background: white !important;
+            border: 1px solid var(--warm-tan) !important;
+        }
+        .stat-value { color: var(--warm-cocoa) !important; }
+
+        /* Collapse */
+        .collapse {
+            background: var(--warm-beige) !important;
+            border: 1px solid var(--warm-tan) !important;
         }
     </style>
 </head>
