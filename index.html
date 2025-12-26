@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="cupcake">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMAI 技術人才測驗系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4/dist/full.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        [v-cloak] { display: none; }
+        /* 日系莫蘭迪風格配色 */
+        [data-theme="cupcake"] {
+            --p: 15 40% 70%;     /* primary 溫暖奶茶色 */
+            --pf: 15 45% 60%;    /* primary focus */
+            --pc: 15 30% 20%;    /* primary content */
+            --s: 180 25% 75%;    /* secondary 淡灰藍 */
+            --sf: 180 30% 65%;
+            --sc: 180 20% 20%;
+            --a: 350 30% 75%;    /* accent 淡玫瑰 */
+            --af: 350 35% 65%;
+            --ac: 350 20% 20%;
+            --n: 30 10% 40%;     /* neutral 暖灰 */
+            --nf: 30 10% 30%;
+            --nc: 30 10% 95%;
+            --b1: 40 30% 97%;    /* base 奶油白 */
+            --b2: 40 25% 93%;
+            --b3: 40 20% 88%;
+            --bc: 30 15% 25%;    /* base content */
+            --in: 200 30% 70%;   /* info 柔和藍 */
+            --inc: 200 30% 20%;
+            --su: 150 30% 65%;   /* success 抹茶綠 */
+            --suc: 150 30% 20%;
+            --wa: 40 40% 75%;    /* warning 奶油黃 */
+            --wac: 40 30% 25%;
+            --er: 5 40% 70%;     /* error 柔和珊瑚 */
+            --erc: 5 30% 20%;
+        }
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .function { color: #dcdcaa; }
+    </style>
+</head>
+<body>
+<div id="app" v-cloak class="min-h-screen bg-base-200">
+    <!-- Header -->
+    <div class="navbar bg-primary text-primary-content shadow-lg">
+        <div class="flex-1">
+            <span class="text-xl font-bold px-4">SMAI 技術人才測驗系統</span>
+        </div>
+        <div class="flex-none px-4" v-if="currentStep !== 'welcome'">
+            <span class="badge badge-ghost">{{ selectedPosition?.name }}</span>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 max-w-4xl">
+        <!-- Welcome Screen -->
+        <div v-if="currentStep === 'welcome'" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">歡迎參加 SMAI 技術人才測驗</h2>
+
+                <div class="alert alert-info mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <h3 class="font-bold">關於本測驗</h3>
+                        <ul class="text-sm mt-2 list-disc list-inside">
+                            <li><strong>鼓勵使用任何 AI 工具</strong>（Claude、ChatGPT、Copilot、Gemini 等皆可）</li>
+                            <li>我們評估的是 <strong>AI 協作能力</strong>，不限定特定工具</li>
+                            <li>重點在於<strong>理解問題</strong>、<strong>驗證結果</strong>和<strong>解釋思路</strong></li>
+                            <li>實作題需說明<strong>為什麼這樣做</strong>，而不只是貼答案</li>
+                            <li>測驗時間約 30-45 分鐘</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                        <h3 class="font-bold">測驗結構</h3>
+                        <ul class="text-sm mt-2 list-disc list-inside">
+                            <li><strong>Part 1：基礎必備</strong> - Git + CI/CD + AI 協作能力（所有職位必考）</li>
+                            <li><strong>Part 2：職位專業</strong> - 依據您選擇的職位出題</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-medium">姓名 *</span></label>
+                        <input type="text" v-model="userName" placeholder="王小明" class="input input-bordered">
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-medium">Email</span></label>
+                        <input type="email" v-model="userEmail" placeholder="email@example.com" class="input input-bordered">
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-medium">電話</span></label>
+                        <input type="tel" v-model="userPhone" placeholder="0912-345-678" class="input input-bordered">
+                    </div>
+                </div>
+
+                <div class="form-control mb-6">
+                    <label class="label"><span class="label-text font-medium">請選擇應徵職位</span></label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label v-for="pos in positions" :key="pos.id"
+                            class="card bg-base-200 cursor-pointer hover:bg-base-300 transition-colors"
+                            :class="{ 'ring-2 ring-primary': selectedPosition?.id === pos.id }">
+                            <div class="card-body p-4">
+                                <div class="flex items-start gap-3">
+                                    <input type="radio" :value="pos" v-model="selectedPosition" class="radio radio-primary mt-1">
+                                    <div>
+                                        <h3 class="font-bold">{{ pos.name }}</h3>
+                                        <p class="text-sm opacity-70">{{ pos.tech }}</p>
+                                        <div class="flex flex-wrap gap-1 mt-2">
+                                            <span v-for="project in pos.projects.slice(0, 3)" class="badge badge-sm badge-outline">{{ project }}</span>
+                                            <span v-if="pos.projects.length > 3" class="badge badge-sm badge-ghost">+{{ pos.projects.length - 3 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="card-actions justify-end">
+                    <button class="btn btn-primary" :disabled="!userName || !selectedPosition" @click="startTest">
+                        開始測驗
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Screen -->
+        <div v-if="currentStep === 'test'" class="space-y-4">
+            <!-- Progress -->
+            <div class="flex items-center gap-4 mb-6">
+                <progress class="progress progress-primary flex-1" :value="currentQuestionIndex + 1" :max="currentQuestions.length"></progress>
+                <span class="text-sm font-medium">{{ currentQuestionIndex + 1 }} / {{ currentQuestions.length }}</span>
+            </div>
+
+            <!-- Question Card -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span v-if="currentQuestion.category" class="badge badge-neutral">{{ currentQuestion.category }}</span>
+                        <span class="badge" :class="getTypeBadgeClass(currentQuestion.type)">{{ getTypeLabel(currentQuestion.type) }}</span>
+                        <span class="badge badge-outline">{{ currentQuestion.difficulty }}</span>
+                    </div>
+
+                    <h2 class="card-title text-lg">{{ currentQuestion.question }}</h2>
+
+                    <!-- Code Block if any -->
+                    <div v-if="currentQuestion.code" class="code-block mt-4" v-html="formatCode(currentQuestion.code)"></div>
+
+                    <!-- Multiple Choice -->
+                    <div v-if="currentQuestion.type === 'choice'" class="mt-6 space-y-3">
+                        <label v-for="(option, idx) in currentQuestion.options" :key="idx"
+                            class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors"
+                            :class="{ 'ring-2 ring-primary bg-primary/10': answers[currentQuestionIndex] === idx }">
+                            <input type="radio" :value="idx" v-model="answers[currentQuestionIndex]" class="radio radio-primary">
+                            <span>{{ option }}</span>
+                        </label>
+                    </div>
+
+                    <!-- Text Answer (Implementation / Code Review) -->
+                    <div v-if="currentQuestion.type === 'implement' || currentQuestion.type === 'review'" class="mt-6">
+                        <div class="alert alert-warning mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>可以使用 AI 輔助，但請<strong>說明你的思路</strong>和<strong>為什麼這樣做</strong></span>
+                        </div>
+                        <textarea v-model="answers[currentQuestionIndex]"
+                            class="textarea textarea-bordered w-full h-48"
+                            :placeholder="currentQuestion.type === 'implement' ? '請寫出你的解決方案和思路說明...' : '請指出問題並說明原因...'"></textarea>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="card-actions justify-between mt-6">
+                        <button class="btn btn-ghost" :disabled="currentQuestionIndex === 0" @click="prevQuestion">
+                            上一題
+                        </button>
+                        <button v-if="currentQuestionIndex < currentQuestions.length - 1" class="btn btn-primary" @click="nextQuestion">
+                            下一題
+                        </button>
+                        <button v-else class="btn btn-success" @click="submitTest">
+                            提交測驗
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div v-if="currentStep === 'result'" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">測驗完成！</h2>
+
+                <div class="stats shadow mb-6">
+                    <div class="stat">
+                        <div class="stat-title">應徵者</div>
+                        <div class="stat-value text-lg">{{ userName }}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-title">應徵職位</div>
+                        <div class="stat-value text-lg">{{ selectedPosition?.name }}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-title">選擇題得分</div>
+                        <div class="stat-value text-primary">{{ choiceScore }} / {{ totalChoiceQuestions }}</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>實作題和 Code Review 題需要人工審閱，我們會在 3 個工作天內通知結果。</span>
+                </div>
+
+                <h3 class="font-bold text-lg mb-4">作答紀錄</h3>
+                <div class="space-y-4 max-h-96 overflow-y-auto">
+                    <div v-for="(q, idx) in currentQuestions" :key="idx" class="collapse collapse-arrow bg-base-200">
+                        <input type="checkbox">
+                        <div class="collapse-title font-medium flex items-center gap-2">
+                            <span class="badge" :class="getTypeBadgeClass(q.type)">{{ getTypeLabel(q.type) }}</span>
+                            {{ q.question.substring(0, 50) }}{{ q.question.length > 50 ? '...' : '' }}
+                            <span v-if="q.type === 'choice'" class="badge ml-auto" :class="isCorrect(idx) ? 'badge-success' : 'badge-error'">
+                                {{ isCorrect(idx) ? '正確' : '錯誤' }}
+                            </span>
+                        </div>
+                        <div class="collapse-content">
+                            <p class="font-medium mb-2">題目：{{ q.question }}</p>
+                            <div v-if="q.code" class="code-block mb-2 text-xs" v-html="formatCode(q.code)"></div>
+                            <p class="text-sm">
+                                <strong>你的答案：</strong>
+                                <span v-if="q.type === 'choice'">{{ q.options[answers[idx]] || '未作答' }}</span>
+                                <span v-else class="whitespace-pre-wrap">{{ answers[idx] || '未作答' }}</span>
+                            </p>
+                            <p v-if="q.type === 'choice'" class="text-sm text-success mt-1">
+                                <strong>正確答案：</strong>{{ q.options[q.answer] }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-actions justify-end mt-6">
+                    <button class="btn btn-ghost" @click="exportResult">匯出結果</button>
+                    <button class="btn btn-primary" @click="resetTest">重新測驗</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer footer-center p-4 bg-base-300 text-base-content mt-8">
+        <div>
+            <p>SMAI 技術人才測驗系統 - 允許使用 AI 輔助作答</p>
+        </div>
+    </footer>
+</div>
+
+<script>
+const { createApp, ref, computed } = Vue;
+
+createApp({
+    setup() {
+        // State
+        const currentStep = ref('welcome');
+        const userName = ref('');
+        const userEmail = ref('');
+        const userPhone = ref('');
+        const selectedPosition = ref(null);
+        const currentQuestionIndex = ref(0);
+        const answers = ref({});
+        const isSubmitting = ref(false);
+        const submitError = ref('');
+
+        // API URL
+        const API_URL = 'https://smai-mcp-center.onrender.com/api/recruit';
+
+        // Positions
+        const positions = ref([
+            {
+                id: 'vue',
+                name: 'Vue 前端工程師',
+                tech: 'Vue 3, Tailwind CSS, DaisyUI',
+                projects: ['GHG', 'MIDS', 'SSO', 'VAC', 'SMAI_8D', 'smai-process-vision', 'smai-ui']
+            },
+            {
+                id: 'fullstack',
+                name: '全端工程師 (Vite)',
+                tech: 'Vite, Shoelace, Prisma, PostgreSQL',
+                projects: ['MSW', 'EAP', 'RMS', 'BPM', 'RFID', 'MCS']
+            },
+            {
+                id: 'angular',
+                name: 'Angular 工程師',
+                tech: 'Angular 21, PrimeNG, TypeScript',
+                projects: ['MES']
+            },
+            {
+                id: 'python',
+                name: 'Python 後端工程師',
+                tech: 'FastAPI, SQLModel, PostgreSQL',
+                projects: ['smai-mcp-center', 'API_Center']
+            },
+            {
+                id: 'ai',
+                name: 'AI/ML 工程師',
+                tech: 'YOLO11, OpenCV, PyTorch',
+                projects: ['AOI-8D', 'smai-process-vision', 'VisionAI']
+            },
+            {
+                id: 'devops',
+                name: 'DevOps 工程師',
+                tech: 'Docker, Shell, Python CLI',
+                projects: ['dash-devtools', 'git-security-hooks', 'SSL']
+            }
+        ]);
+
+        // 基礎必備題（所有職位都要考）
+        const coreQuestions = [
+            {
+                type: 'choice',
+                difficulty: '基礎',
+                category: 'Git',
+                question: '以下哪個 Git 指令可以查看尚未提交的變更？',
+                options: ['git log', 'git status', 'git show', 'git branch'],
+                answer: 1
+            },
+            {
+                type: 'choice',
+                difficulty: '基礎',
+                category: 'Git',
+                question: '當你想要取消已經 git add 的檔案（unstage），應該用哪個指令？',
+                options: ['git reset HEAD <file>', 'git checkout <file>', 'git revert <file>', 'git rm <file>'],
+                answer: 0
+            },
+            {
+                type: 'choice',
+                difficulty: '中等',
+                category: 'Git',
+                question: '在團隊協作中，為什麼不建議對已經 push 的 commit 使用 git rebase？',
+                options: [
+                    '會改變 commit 歷史，造成其他人的分支衝突',
+                    'rebase 比 merge 慢',
+                    'rebase 會刪除檔案',
+                    'GitHub 不支援 rebase'
+                ],
+                answer: 0
+            },
+            {
+                type: 'choice',
+                difficulty: '基礎',
+                category: 'CI/CD',
+                question: 'CI/CD 中的 CI 代表什麼？',
+                options: ['Code Integration', 'Continuous Integration', 'Complete Installation', 'Central Infrastructure'],
+                answer: 1
+            },
+            {
+                type: 'choice',
+                difficulty: '中等',
+                category: 'CI/CD',
+                question: '以下哪個不是 CI pipeline 常見的步驟？',
+                options: ['Lint 檢查', '單元測試', '手動部署到正式環境', '建置 Docker image'],
+                answer: 2
+            },
+            {
+                type: 'implement',
+                difficulty: '中等',
+                category: 'Claude Code',
+                question: '請描述你會如何使用 Claude Code（或其他 AI 工具）來協助開發一個新功能？從理解需求到完成實作的流程是什麼？請具體說明你會怎麼下 prompt、如何驗證 AI 產出的程式碼。'
+            },
+            {
+                type: 'review',
+                difficulty: '中等',
+                category: 'Claude Code',
+                question: '以下是 AI 產生的程式碼，請指出可能的問題並說明你會如何驗證和改進它：',
+                code: `// AI 產生的用戶驗證函數
+function validateUser(input) {
+    const user = JSON.parse(input)
+    if (user.email.includes('@')) {
+        return { valid: true, user }
+    }
+    return { valid: false }
+}`
+            }
+        ];
+
+        // Question Banks
+        const questionBanks = {
+            vue: [
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'Vue 3 的 Composition API 中，哪個函數用於建立響應式物件？',
+                    options: ['ref()', 'reactive()', 'computed()', '以上皆是'],
+                    answer: 3
+                },
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: '在 Vue 3 中，watch 和 watchEffect 的主要差別是？',
+                    options: [
+                        'watch 需要明確指定監聽的響應式資料',
+                        'watchEffect 會自動追蹤依賴',
+                        'watch 可以取得新舊值',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    question: 'Tailwind CSS 的 JIT (Just-in-Time) 模式有什麼優點？',
+                    options: [
+                        '只產生用到的 CSS，檔案更小',
+                        '支援任意值如 w-[123px]',
+                        '開發時更快編譯',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'review',
+                    difficulty: '中等',
+                    question: '以下 Vue 3 程式碼有什麼問題？請指出並說明如何修正。',
+                    code: `const count = ref(0)
+const doubled = count.value * 2  // 希望是響應式的雙倍值
+
+function increment() {
+    count = count.value + 1
+}`
+                },
+                {
+                    type: 'implement',
+                    difficulty: '進階',
+                    question: '請實作一個 Vue 3 composable 函數 useDebounce(value, delay)，將輸入值防抖處理。說明你的實作思路。'
+                }
+            ],
+            fullstack: [
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'Prisma 中，哪個指令用於同步資料庫 schema？',
+                    options: ['prisma generate', 'prisma migrate dev', 'prisma db push', 'prisma sync'],
+                    answer: 2
+                },
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'Vite 相比 Webpack 的主要優勢是？',
+                    options: [
+                        '開發時使用原生 ES modules，啟動更快',
+                        '生產環境用 Rollup 打包',
+                        'HMR 更新更快',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    question: 'Shoelace Web Components 的優點是？',
+                    options: [
+                        '框架無關，可用於 Vue/React/Angular',
+                        '原生瀏覽器支援，不需要編譯',
+                        '樣式封裝在 Shadow DOM',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'review',
+                    difficulty: '中等',
+                    question: '以下 Prisma query 有什麼效能問題？如何優化？',
+                    code: `// 取得所有用戶和他們的訂單
+const users = await prisma.user.findMany()
+for (const user of users) {
+    const orders = await prisma.order.findMany({
+        where: { userId: user.id }
+    })
+    user.orders = orders
+}`
+                },
+                {
+                    type: 'implement',
+                    difficulty: '進階',
+                    question: '請設計一個 RESTful API 端點來處理分頁查詢，需支援排序、篩選功能。說明 URL 設計和回傳格式。'
+                }
+            ],
+            angular: [
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'Angular 的 Standalone Components 有什麼優點？',
+                    options: [
+                        '不需要 NgModule',
+                        '更容易做 tree-shaking',
+                        '簡化應用結構',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'Angular Signals 是用來做什麼的？',
+                    options: [
+                        '取代 RxJS 做簡單的狀態管理',
+                        '更細粒度的變更偵測',
+                        '提升效能',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    question: 'PrimeNG 的 p-table 元件，如何實現伺服器端分頁？',
+                    options: [
+                        '設定 lazy="true" 並監聽 onLazyLoad 事件',
+                        '使用 paginator 屬性',
+                        '使用 virtualScroll',
+                        '設定 rows 屬性'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'review',
+                    difficulty: '中等',
+                    question: '以下 Angular 程式碼有什麼問題？',
+                    code: `@Component({
+    selector: 'app-user',
+    template: \`<div>{{ user.name }}</div>\`
+})
+export class UserComponent {
+    @Input() user: User;
+
+    ngOnInit() {
+        console.log(this.user.name);  // 可能出錯
+    }
+}`
+                },
+                {
+                    type: 'implement',
+                    difficulty: '進階',
+                    question: '請說明如何在 Angular 中實作一個可重用的確認對話框服務 (ConfirmationService)，支援 Promise-based API。'
+                }
+            ],
+            python: [
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'FastAPI 的 Depends 函數主要用途是？',
+                    options: ['依賴注入', '路由定義', '錯誤處理', '資料驗證'],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'SQLModel 結合了哪兩個套件的功能？',
+                    options: [
+                        'SQLAlchemy + Pydantic',
+                        'Django ORM + Marshmallow',
+                        'Peewee + attrs',
+                        'Tortoise + dataclasses'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    question: 'FastAPI 中如何正確處理資料庫 session 的生命週期？',
+                    options: [
+                        '使用 Depends 和 generator function (yield)',
+                        '在每個 route 手動建立和關閉',
+                        '使用全域 session',
+                        '使用 middleware'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'review',
+                    difficulty: '中等',
+                    question: '以下 FastAPI 程式碼有什麼安全性問題？',
+                    code: `@app.get("/users/{user_id}")
+async def get_user(user_id: str, db: Session = Depends(get_db)):
+    query = f"SELECT * FROM users WHERE id = '{user_id}'"
+    result = db.execute(query)
+    return result.fetchone()`
+                },
+                {
+                    type: 'implement',
+                    difficulty: '進階',
+                    question: '請實作一個 FastAPI 的 BackgroundTasks 範例，用於在 API 回應後異步發送 Email。說明為什麼要用 BackgroundTasks 而不是直接等待。'
+                }
+            ],
+            ai: [
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'YOLO (You Only Look Once) 的主要特點是？',
+                    options: [
+                        '單次前向傳播同時預測所有物件',
+                        '即時物件偵測',
+                        '端到端訓練',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'OpenCV 中 cv2.VideoCapture 的 read() 方法回傳什麼？',
+                    options: [
+                        '只有影格 (frame)',
+                        '(成功旗標, 影格)',
+                        '影片資訊',
+                        '影格數量'
+                    ],
+                    answer: 1
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    question: '物件偵測中，IoU (Intersection over Union) 的用途是？',
+                    options: [
+                        '評估預測框和真實框的重疊程度',
+                        '用於 NMS (Non-Maximum Suppression)',
+                        '計算模型準確率 (mAP)',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'review',
+                    difficulty: '中等',
+                    question: '以下程式碼在處理影片時可能有什麼問題？',
+                    code: `cap = cv2.VideoCapture(video_path)
+frames = []
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+    frames.append(frame)  # 儲存所有影格
+# 處理 frames...`
+                },
+                {
+                    type: 'implement',
+                    difficulty: '進階',
+                    question: '請說明如何用 YOLO 實作一個簡單的製程動作分段系統：給定一段作業員操作影片，如何偵測並標記不同的動作階段？'
+                }
+            ],
+            devops: [
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'Docker 的 multi-stage build 有什麼好處？',
+                    options: [
+                        '減少最終映像檔大小',
+                        '分離建置環境和執行環境',
+                        '不需要在執行環境安裝建置工具',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'Git hook 中，pre-commit 和 pre-push 的差別是？',
+                    options: [
+                        'pre-commit 在 commit 前執行，pre-push 在 push 前執行',
+                        'pre-commit 檢查單次變更，pre-push 可檢查多個 commits',
+                        'pre-push 可以阻止推送到遠端',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    question: '以下哪個做法可以避免在 Git 中不小心提交機敏資料？',
+                    options: [
+                        '使用 .gitignore 忽略 .env 檔案',
+                        '使用 pre-commit hook 掃描機敏資料',
+                        '使用 git-secrets 或類似工具',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'review',
+                    difficulty: '中等',
+                    question: '以下 Dockerfile 有什麼可以改進的地方？',
+                    code: `FROM python:3.12
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+CMD ["python", "app.py"]`
+                },
+                {
+                    type: 'implement',
+                    difficulty: '進階',
+                    question: '請設計一個 CI/CD pipeline，當 push 到 main branch 時自動：1) 執行測試 2) 建置 Docker image 3) 部署到 staging 環境。說明你會用什麼工具和為什麼。'
+                }
+            ]
+        };
+
+        // Computed
+        const currentQuestions = computed(() => {
+            if (!selectedPosition.value) return [];
+            // 合併：基礎必備題 + 職位專屬題
+            const positionQuestions = questionBanks[selectedPosition.value.id] || [];
+            return [...coreQuestions, ...positionQuestions];
+        });
+
+        const currentQuestion = computed(() => {
+            return currentQuestions.value[currentQuestionIndex.value] || {};
+        });
+
+        const choiceScore = computed(() => {
+            let score = 0;
+            currentQuestions.value.forEach((q, idx) => {
+                if (q.type === 'choice' && answers.value[idx] === q.answer) {
+                    score++;
+                }
+            });
+            return score;
+        });
+
+        const totalChoiceQuestions = computed(() => {
+            return currentQuestions.value.filter(q => q.type === 'choice').length;
+        });
+
+        // Methods
+        const startTest = () => {
+            currentStep.value = 'test';
+            currentQuestionIndex.value = 0;
+            answers.value = {};
+        };
+
+        const nextQuestion = () => {
+            if (currentQuestionIndex.value < currentQuestions.value.length - 1) {
+                currentQuestionIndex.value++;
+            }
+        };
+
+        const prevQuestion = () => {
+            if (currentQuestionIndex.value > 0) {
+                currentQuestionIndex.value--;
+            }
+        };
+
+        const submitTest = async () => {
+            isSubmitting.value = true;
+            submitError.value = '';
+
+            try {
+                // 組裝答案資料
+                const answersData = currentQuestions.value.map((q, idx) => ({
+                    question: q.question,
+                    type: q.type,
+                    category: q.category || selectedPosition.value.name,
+                    answer: q.type === 'choice' ? q.options[answers.value[idx]] : answers.value[idx],
+                    correct: q.type === 'choice' ? answers.value[idx] === q.answer : null
+                }));
+
+                const response = await fetch(`${API_URL}/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: userName.value,
+                        email: userEmail.value || null,
+                        phone: userPhone.value || null,
+                        position: selectedPosition.value.name,
+                        choice_score: choiceScore.value,
+                        total_choice: totalChoiceQuestions.value,
+                        answers: answersData
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('提交失敗，請稍後再試');
+                }
+
+                currentStep.value = 'result';
+            } catch (err) {
+                submitError.value = err.message;
+                console.error('Submit error:', err);
+                // 即使提交失敗，也讓使用者看到結果
+                currentStep.value = 'result';
+            } finally {
+                isSubmitting.value = false;
+            }
+        };
+
+        const resetTest = () => {
+            currentStep.value = 'welcome';
+            userName.value = '';
+            selectedPosition.value = null;
+            currentQuestionIndex.value = 0;
+            answers.value = {};
+        };
+
+        const isCorrect = (idx) => {
+            const q = currentQuestions.value[idx];
+            return q.type === 'choice' && answers.value[idx] === q.answer;
+        };
+
+        const getTypeBadgeClass = (type) => {
+            switch (type) {
+                case 'choice': return 'badge-info';
+                case 'implement': return 'badge-warning';
+                case 'review': return 'badge-error';
+                default: return 'badge-ghost';
+            }
+        };
+
+        const getTypeLabel = (type) => {
+            switch (type) {
+                case 'choice': return '選擇題';
+                case 'implement': return '實作題';
+                case 'review': return 'Code Review';
+                default: return type;
+            }
+        };
+
+        const formatCode = (code) => {
+            return code
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/(const|let|var|function|async|await|return|if|else|for|while|import|from|export|class|extends|new|this|try|catch|throw)/g, '<span class="keyword">$1</span>')
+                .replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="string">$1</span>')
+                .replace(/(\/\/.*)/g, '<span class="comment">$1</span>');
+        };
+
+        const exportResult = () => {
+            const result = {
+                name: userName.value,
+                position: selectedPosition.value?.name,
+                timestamp: new Date().toISOString(),
+                choiceScore: choiceScore.value,
+                totalChoiceQuestions: totalChoiceQuestions.value,
+                answers: currentQuestions.value.map((q, idx) => ({
+                    question: q.question,
+                    type: q.type,
+                    answer: q.type === 'choice' ? q.options[answers.value[idx]] : answers.value[idx],
+                    correct: q.type === 'choice' ? answers.value[idx] === q.answer : null
+                }))
+            };
+
+            const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `smai-test-${userName.value}-${Date.now()}.json`;
+            a.click();
+        };
+
+        return {
+            currentStep,
+            userName,
+            userEmail,
+            userPhone,
+            selectedPosition,
+            positions,
+            currentQuestionIndex,
+            currentQuestions,
+            currentQuestion,
+            answers,
+            choiceScore,
+            totalChoiceQuestions,
+            isSubmitting,
+            submitError,
+            startTest,
+            nextQuestion,
+            prevQuestion,
+            submitTest,
+            resetTest,
+            isCorrect,
+            getTypeBadgeClass,
+            getTypeLabel,
+            formatCode,
+            exportResult
+        };
+    }
+}).mount('#app');
+
+// Initialize Lucide icons
+lucide.createIcons();
+</script>
+</body>
+</html>
