@@ -36,23 +36,43 @@
 
     <!-- Dashboard -->
     <div v-else class="p-6">
-        <div class="navbar bg-base-100 rounded-box shadow mb-6">
-            <div class="flex-1">
+        <div class="bg-base-100 rounded-box shadow mb-6 p-4">
+            <div class="flex flex-wrap items-center justify-between gap-4">
                 <span class="text-xl font-bold">SMAI 測驗管理後台</span>
+                <div class="flex gap-2">
+                    <button class="btn btn-ghost btn-sm" @click="fetchResults">重新整理</button>
+                    <button class="btn btn-ghost btn-sm" @click="logout">登出</button>
+                </div>
             </div>
-            <div class="flex-none gap-2">
-                <select v-model="filterStatus" class="select select-bordered select-sm">
-                    <option value="">全部狀態</option>
-                    <option value="pending">待審核</option>
-                    <option value="passed">通過</option>
-                    <option value="rejected">不通過</option>
-                </select>
-                <select v-model="filterPosition" class="select select-bordered select-sm">
-                    <option value="">全部職位</option>
-                    <option v-for="pos in positions" :value="pos">{{ pos }}</option>
-                </select>
-                <button class="btn btn-ghost btn-sm" @click="fetchResults">重新整理</button>
-                <button class="btn btn-ghost btn-sm" @click="logout">登出</button>
+
+            <!-- 篩選區 -->
+            <div class="flex flex-wrap gap-4 mt-4">
+                <!-- 狀態篩選 -->
+                <div>
+                    <div class="text-xs opacity-60 mb-1">狀態</div>
+                    <div class="join">
+                        <input type="radio" name="status" class="join-item btn btn-sm" aria-label="全部"
+                            :checked="filterStatus === ''" @change="filterStatus = ''">
+                        <input type="radio" name="status" class="join-item btn btn-sm btn-warning" aria-label="待審核"
+                            :checked="filterStatus === 'pending'" @change="filterStatus = 'pending'">
+                        <input type="radio" name="status" class="join-item btn btn-sm btn-success" aria-label="通過"
+                            :checked="filterStatus === 'passed'" @change="filterStatus = 'passed'">
+                        <input type="radio" name="status" class="join-item btn btn-sm btn-error" aria-label="不通過"
+                            :checked="filterStatus === 'rejected'" @change="filterStatus = 'rejected'">
+                    </div>
+                </div>
+
+                <!-- 職位篩選 -->
+                <div v-if="positions.length">
+                    <div class="text-xs opacity-60 mb-1">職位</div>
+                    <div class="join flex-wrap">
+                        <input type="radio" name="position" class="join-item btn btn-sm" aria-label="全部"
+                            :checked="filterPosition === ''" @change="filterPosition = ''">
+                        <input v-for="pos in positions" :key="pos" type="radio" name="position"
+                            class="join-item btn btn-sm" :aria-label="pos"
+                            :checked="filterPosition === pos" @change="filterPosition = pos">
+                    </div>
+                </div>
             </div>
         </div>
 
