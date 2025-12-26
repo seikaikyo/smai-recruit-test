@@ -573,13 +573,30 @@
     <!-- Footer -->
     <footer class="footer footer-center p-4 bg-base-300 text-base-content mt-8">
         <div>
-            <p>SMAI 技術人才測驗系統 - 允許使用 AI 輔助作答</p>
+            <p>SMAI 技術人才測驗系統 - 歡迎使用 AI 輔助作答</p>
+            <p class="text-sm opacity-70">系統設計者 - 選我正解</p>
         </div>
     </footer>
 </div>
 
 <script>
-const { createApp, ref, computed } = Vue;
+// 立即設定主題背景（不等 Vue）
+(function() {
+    const bgMap = {
+        caramel: 'linear-gradient(135deg, #FDF8F3 0%, #F5EDE4 100%)',
+        matcha: 'linear-gradient(135deg, #F0F5F0 0%, #E0EBE0 100%)',
+        sakura: 'linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%)',
+        fuji: 'linear-gradient(135deg, #F8F5FC 0%, #EDE8F4 100%)'
+    };
+    const theme = localStorage.getItem('smai-theme') || 'caramel';
+    document.body.style.background = bgMap[theme];
+    document.body.style.minHeight = '100vh';
+    if (theme !== 'caramel') {
+        document.documentElement.setAttribute('data-theme', theme);
+    }
+})();
+
+const { createApp, ref, computed, onMounted } = Vue;
 
 createApp({
     setup() {
@@ -689,6 +706,12 @@ createApp({
                 name: 'DevOps 工程師',
                 tech: 'Docker, Shell, Python CLI',
                 projects: ['dash-devtools', 'git-security-hooks', 'SSL']
+            },
+            {
+                id: 'iot',
+                name: 'IoT 工程師',
+                tech: '研華 WISE-IoT, EdgeLink, Node-RED',
+                projects: ['ECU-4784', 'VisionAI', 'WISE-2410', 'Modbus']
             }
         ]);
 
@@ -1077,6 +1100,70 @@ CMD ["python", "app.py"]`
                     type: 'implement',
                     difficulty: '進階',
                     question: '請設計一個 CI/CD pipeline，當 push 到 main branch 時自動：1) 執行測試 2) 建置 Docker image 3) 部署到 staging 環境。說明你會用什麼工具和為什麼。'
+                }
+            ],
+            iot: [
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: '研華 WISE-IoT 平台中，EdgeLink 的主要用途是什麼？',
+                    options: [
+                        '雲端資料儲存',
+                        '邊緣端資料擷取與協議轉換',
+                        '網頁前端開發',
+                        '資料庫管理'
+                    ],
+                    answer: 1
+                },
+                {
+                    type: 'choice',
+                    difficulty: '基礎',
+                    question: 'Modbus RTU 和 Modbus TCP 的主要差別是？',
+                    options: [
+                        'RTU 使用序列通訊，TCP 使用乙太網路',
+                        'RTU 速度較快',
+                        'TCP 不需要設定站號',
+                        'RTU 只能讀取，TCP 可讀寫'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    question: 'Node-RED 中，如何處理 MQTT 訊息並轉發到 HTTP API？',
+                    options: [
+                        '使用 mqtt in → function → http request 節點',
+                        '直接用 mqtt out 節點',
+                        '需要寫 Python 腳本',
+                        '無法實現'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    question: 'OPC UA 相較於傳統 OPC DA 的優勢是？',
+                    options: [
+                        '跨平台支援（不限於 Windows）',
+                        '內建安全機制',
+                        '支援資訊模型',
+                        '以上皆是'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'review',
+                    difficulty: '中等',
+                    question: '以下 Node-RED flow 有什麼問題？如何改進？',
+                    code: `mqtt in [broker]
+  → function (每秒處理 100 筆)
+    → http request (POST 到 API)
+// 問題：API 回應緩慢時會發生什麼？`
+                },
+                {
+                    type: 'implement',
+                    difficulty: '進階',
+                    question: '請設計一個工廠設備監控系統架構：如何從 PLC (Modbus) 擷取資料，經過邊緣運算 (WISE-IoT/EdgeLink)，最後呈現在網頁儀表板？請說明資料流和每層的技術選擇。'
                 }
             ]
         };
