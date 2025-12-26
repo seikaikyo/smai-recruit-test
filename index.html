@@ -861,6 +861,14 @@
             <div class="card-body">
                 <h2 class="card-title text-2xl mb-4">測驗完成！</h2>
 
+                <!-- 根據分數顯示鼓勵訊息 -->
+                <div class="alert mb-4" :class="resultEncouragement.alertClass">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="resultEncouragement.icon" />
+                    </svg>
+                    <span>{{ resultEncouragement.message }}</span>
+                </div>
+
                 <div class="stats shadow mb-4 flex-wrap">
                     <div class="stat">
                         <div class="stat-title">應徵者</div>
@@ -2395,6 +2403,36 @@ jobs:
             return scores;
         });
 
+        // 結果頁鼓勵訊息
+        const resultEncouragement = computed(() => {
+            const rate = totalChoiceQuestions.value > 0 ? choiceScore.value / totalChoiceQuestions.value : 0;
+            if (rate >= 0.8) {
+                return {
+                    alertClass: 'alert-success',
+                    icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                    message: '太厲害了！你的表現非常優秀，期待與你共事！'
+                };
+            } else if (rate >= 0.6) {
+                return {
+                    alertClass: 'alert-info',
+                    icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+                    message: '表現不錯！我們會仔細評估你的答案，很快與你聯繫。'
+                };
+            } else if (rate >= 0.4) {
+                return {
+                    alertClass: 'alert-warning',
+                    icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
+                    message: '感謝你的參與！技術題只是評估的一部分，我們更重視你的思路和態度。'
+                };
+            } else {
+                return {
+                    alertClass: 'alert-warning',
+                    icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z',
+                    message: '沒關係！每個人都有自己的強項，我們會綜合評估你的潛力和特質。保持學習的熱情最重要！'
+                };
+            }
+        });
+
         // Methods
         const startTest = () => {
             currentStep.value = 'test';
@@ -2708,6 +2746,7 @@ jobs:
             choiceScore,
             totalChoiceQuestions,
             personalityScores,
+            resultEncouragement,
             isSubmitting,
             submitError,
             startTest,
