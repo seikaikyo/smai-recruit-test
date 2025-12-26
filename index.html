@@ -65,6 +65,19 @@
             --accent-yellow: #E8E0F0;
         }
 
+        html[data-theme="orange"], html[data-theme="orange"] body {
+            --primary-light: #E8A060;
+            --primary-dark: #C87830;
+            --primary-text: #5A3820;
+            --bg-cream: #FFF8F0;
+            --bg-light: #FFE8D8;
+            --bg-medium: #F0D0B8;
+            --accent-pink: #F8D0C0;
+            --accent-green: #D8E0C8;
+            --accent-blue: #D0E0F0;
+            --accent-yellow: #FFE8C0;
+        }
+
         /* 全域過渡動畫 */
         * {
             transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease, box-shadow 0.3s ease;
@@ -133,6 +146,7 @@
         .theme-matcha { background: linear-gradient(135deg, #9DB4A0, #6B8E6B); }
         .theme-sakura { background: linear-gradient(135deg, #E8B4B4, #C48888); }
         .theme-fuji { background: linear-gradient(135deg, #B4A8C4, #887898); }
+        .theme-orange { background: linear-gradient(135deg, #E8A060, #C87830); }
 
         /* 卡片樣式 */
         .card {
@@ -586,7 +600,8 @@
         caramel: 'linear-gradient(135deg, #FDF8F3 0%, #F5EDE4 100%)',
         matcha: 'linear-gradient(135deg, #F0F5F0 0%, #E0EBE0 100%)',
         sakura: 'linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%)',
-        fuji: 'linear-gradient(135deg, #F8F5FC 0%, #EDE8F4 100%)'
+        fuji: 'linear-gradient(135deg, #F8F5FC 0%, #EDE8F4 100%)',
+        orange: 'linear-gradient(135deg, #FFF8F0 0%, #FFE8D8 100%)'
     };
     const theme = localStorage.getItem('smai-theme') || 'caramel';
     document.body.style.background = bgMap[theme];
@@ -617,14 +632,16 @@ createApp({
             caramel: { name: '焦糖奶茶', bg: 'linear-gradient(135deg, #FDF8F3 0%, #F5EDE4 100%)' },
             matcha: { name: '抹茶清新', bg: 'linear-gradient(135deg, #F0F5F0 0%, #E0EBE0 100%)' },
             sakura: { name: '櫻花柔粉', bg: 'linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%)' },
-            fuji: { name: '藤紫優雅', bg: 'linear-gradient(135deg, #F8F5FC 0%, #EDE8F4 100%)' }
+            fuji: { name: '藤紫優雅', bg: 'linear-gradient(135deg, #F8F5FC 0%, #EDE8F4 100%)' },
+            orange: { name: '橘光日和', bg: 'linear-gradient(135deg, #FFF8F0 0%, #FFE8D8 100%)' }
         };
 
         const themes = ref([
             { id: 'caramel', name: '焦糖奶茶' },
             { id: 'matcha', name: '抹茶清新' },
             { id: 'sakura', name: '櫻花柔粉' },
-            { id: 'fuji', name: '藤紫優雅' }
+            { id: 'fuji', name: '藤紫優雅' },
+            { id: 'orange', name: '橘光日和' }
         ]);
         const currentTheme = ref(localStorage.getItem('smai-theme') || 'caramel');
 
