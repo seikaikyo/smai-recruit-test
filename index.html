@@ -392,6 +392,7 @@
         .badge-error { background: var(--accent-pink) !important; }
         .badge-success { background: var(--accent-green) !important; }
         .badge-neutral { background: var(--bg-medium) !important; }
+        .badge-secondary { background: linear-gradient(135deg, #E8A060, #C87830) !important; color: white !important; }
         .badge-ghost {
             background: transparent !important;
             border: 1px dashed var(--bg-medium) !important;
@@ -439,6 +440,40 @@
         .option-item.ring-2 {
             background: white !important;
             border-color: var(--primary-light) !important;
+        }
+
+        /* AI 助理提示區 */
+        .ai-assistant-bar {
+            background: linear-gradient(90deg, var(--bg-light) 0%, var(--bg-cream) 100%);
+            border-bottom: 1px solid var(--bg-medium);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .ai-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(200, 120, 48, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(200, 120, 48, 0); }
+        }
+        .ai-message {
+            font-size: 0.875rem;
+            color: var(--primary-text);
+        }
+        .typing-text {
+            display: inline-block;
+        }
+        html[data-theme="dark"] .ai-assistant-bar {
+            background: linear-gradient(90deg, #16213E 0%, #1A1A2E 100%);
         }
 
         /* Footer */
@@ -538,6 +573,20 @@
                 </svg>
             </button>
             <span v-if="currentStep !== 'welcome'" class="badge badge-ghost">{{ selectedPosition?.name }}</span>
+        </div>
+    </div>
+
+    <!-- AI 助理提示區 -->
+    <div v-if="currentStep === 'test'" class="ai-assistant-bar">
+        <div class="container mx-auto px-4 py-2 flex items-center gap-3">
+            <div class="ai-avatar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+                </svg>
+            </div>
+            <div class="ai-message">
+                <span class="typing-text">{{ aiMessage }}</span>
+            </div>
         </div>
     </div>
 
@@ -647,9 +696,9 @@
             <!-- Question Card -->
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span v-if="currentQuestion.category" class="badge badge-neutral">{{ currentQuestion.category }}</span>
-                        <span class="badge" :class="getTypeBadgeClass(currentQuestion.type)">{{ getTypeLabel(currentQuestion.type) }}</span>
+                    <div class="flex items-center gap-2 mb-2 flex-wrap">
+                        <span v-if="currentQuestion.category" class="badge" :class="currentQuestion.category === '人格特質' ? 'badge-secondary' : 'badge-neutral'">{{ currentQuestion.category }}</span>
+                        <span class="badge" :class="getTypeBadgeClass(currentQuestion.type, currentQuestion.category)">{{ currentQuestion.category === '人格特質' ? '情境題' : getTypeLabel(currentQuestion.type) }}</span>
                         <span class="badge badge-outline">{{ currentQuestion.difficulty }}</span>
                     </div>
 
@@ -702,7 +751,7 @@
             <div class="card-body">
                 <h2 class="card-title text-2xl mb-4">測驗完成！</h2>
 
-                <div class="stats shadow mb-6">
+                <div class="stats shadow mb-4 flex-wrap">
                     <div class="stat">
                         <div class="stat-title">應徵者</div>
                         <div class="stat-value text-lg">{{ userName }}</div>
@@ -712,8 +761,27 @@
                         <div class="stat-value text-lg">{{ selectedPosition?.name }}</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-title">選擇題得分</div>
+                        <div class="stat-title">技術題得分</div>
                         <div class="stat-value text-primary">{{ choiceScore }} / {{ totalChoiceQuestions }}</div>
+                    </div>
+                </div>
+
+                <!-- 人格特質分析 -->
+                <div class="mb-6 p-4 rounded-xl" style="background: var(--bg-light);">
+                    <h3 class="font-bold mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        人格特質分析
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div v-for="(trait, key) in personalityScores" :key="key" class="text-center p-3 rounded-lg" style="background: var(--bg-cream);">
+                            <div class="text-2xl font-bold" :style="{ color: trait.score === trait.total ? 'var(--accent-green)' : 'var(--primary-dark)' }">
+                                {{ trait.total > 0 ? Math.round(trait.score / trait.total * 100) : 0 }}%
+                            </div>
+                            <div class="text-sm opacity-80">{{ trait.label }}</div>
+                            <div class="text-xs opacity-60">{{ trait.score }}/{{ trait.total }}</div>
+                        </div>
                     </div>
                 </div>
 
@@ -729,7 +797,7 @@
                     <div v-for="(q, idx) in currentQuestions" :key="idx" class="collapse collapse-arrow bg-base-200">
                         <input type="checkbox">
                         <div class="collapse-title font-medium flex items-center gap-2">
-                            <span class="badge" :class="getTypeBadgeClass(q.type)">{{ getTypeLabel(q.type) }}</span>
+                            <span class="badge" :class="getTypeBadgeClass(q.type, q.category)">{{ q.category === '人格特質' ? '情境題' : getTypeLabel(q.type) }}</span>
                             {{ q.question.substring(0, 50) }}{{ q.question.length > 50 ? '...' : '' }}
                             <span v-if="q.type === 'choice'" class="badge ml-auto" :class="isCorrect(idx) ? 'badge-success' : 'badge-error'">
                                 {{ isCorrect(idx) ? '正確' : '錯誤' }}
@@ -886,6 +954,42 @@ createApp({
             '木村拓哉', '福山雅治', '玉木宏', '藤原龍也', '小栗旬'
         ];
         const randomStar = ref(jpStars[Math.floor(Math.random() * jpStars.length)]);
+
+        // AI 助理訊息系統
+        const aiMessages = {
+            choice: [
+                '這題考驗你的基礎知識，放輕鬆作答吧！',
+                '仔細閱讀每個選項，答案就藏在細節裡',
+                '相信你的直覺，但也別忘了驗證',
+                '這題有點考驗細心度喔！'
+            ],
+            implement: [
+                '實作題沒有標準答案，展現你的思路最重要',
+                '可以用 AI 輔助，但記得說明你的理解',
+                '寫出你的思考過程，這比答案更重要',
+                '別只貼程式碼，解釋為什麼這樣做'
+            ],
+            review: [
+                'Code Review 考驗你的觀察力和經驗',
+                '試著找出潛在的 Bug 和改進空間',
+                '好的 Code Review 能讓團隊一起進步',
+                '想想如果這是你的程式碼，你會怎麼改？'
+            ],
+            personality: [
+                '這題沒有對錯，誠實回答最重要',
+                '我們想了解真實的你，不用猜我們想要什麼答案',
+                '每個人都是獨一無二的，你的答案也是',
+                '放鬆心情，想像真實情境會怎麼反應'
+            ]
+        };
+        const aiMessage = computed(() => {
+            const q = currentQuestion.value;
+            if (!q.type) return '準備好了嗎？讓我們開始吧！';
+            const category = q.category === '人格特質' ? 'personality' : q.type;
+            const messages = aiMessages[category] || aiMessages.choice;
+            // 根據題號選擇不同訊息
+            return messages[currentQuestionIndex.value % messages.length];
+        });
 
         // 倒數計時系統
         const timeLimit = 60; // 每題 60 秒
@@ -1101,6 +1205,123 @@ function validateUser(input) {
         return { valid: false, error: '無效的 JSON 格式' }
     }
 }`
+            },
+            // 人格特質題 - 正直善良
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '你在測試時發現一個嚴重 Bug，但修復它會讓專案延遲一週。這時候你會怎麼做？',
+                options: [
+                    '立即向主管報告，誠實說明情況和影響',
+                    '先自己嘗試修復，修不好再說',
+                    '這不是我負責的模組，先不管',
+                    '等客戶發現再處理'
+                ],
+                answer: 0,
+                trait: 'integrity'
+            },
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '你的同事最近工作效率明顯下降，你私下知道他家裡有些困難。你會怎麼做？',
+                options: [
+                    '主動關心，問他需不需要幫忙分擔工作',
+                    '這是私事，不應該過問',
+                    '向主管反映他的工作表現',
+                    '等他自己來求助'
+                ],
+                answer: 0,
+                trait: 'kindness'
+            },
+            // 人格特質題 - 活潑大方
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '團隊要做技術分享，主管問誰願意當第一個講者，你會？',
+                options: [
+                    '主動舉手：「我來！正好最近研究了一個有趣的主題」',
+                    '等別人先舉手，看情況再決定',
+                    '假裝沒看到，希望不要點到我',
+                    '表示最近太忙，下次再說'
+                ],
+                answer: 0,
+                trait: 'outgoing'
+            },
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '團隊聚餐時，你通常扮演什麼角色？',
+                options: [
+                    '活絡氣氛，主動找話題聊天',
+                    '跟熟悉的人聊天就好',
+                    '安靜吃飯，聽別人聊',
+                    '能不去就不去'
+                ],
+                answer: 0,
+                trait: 'outgoing'
+            },
+            // 人格特質題 - 願意分享
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '你花了兩週研究出一個很厲害的解決方案，新來的同事遇到類似問題來問你，你會？',
+                options: [
+                    '詳細解釋原理，還把相關資料整理給他',
+                    '簡單說明方向，讓他自己去研究',
+                    '給他看我的程式碼，但不多解釋',
+                    '告訴他去問 Google 或 ChatGPT'
+                ],
+                answer: 0,
+                trait: 'sharing'
+            },
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '你發現一個能大幅提升效率的工具/技巧，你會怎麼做？',
+                options: [
+                    '寫一篇教學文或辦分享會，讓全團隊都知道',
+                    '在群組裡簡單提一下',
+                    '有人問再說',
+                    '這是我的競爭優勢，先留著'
+                ],
+                answer: 0,
+                trait: 'sharing'
+            },
+            // 綜合特質題
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '你寫的程式碼被同事在 Code Review 中指出很多問題，你的反應是？',
+                options: [
+                    '感謝他的仔細審查，虛心接受並學習',
+                    '解釋我為什麼這樣寫，但還是會改',
+                    '覺得他太挑剔了',
+                    '下次不想讓他 review 我的 code'
+                ],
+                answer: 0,
+                trait: 'integrity'
+            },
+            {
+                type: 'implement',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '請描述一個你曾經主動幫助同事或團隊的經驗。你做了什麼？為什麼這樣做？結果如何？',
+                referenceAnswer: `評分重點：
+1. 是否有具體的事例（不是空泛的描述）
+2. 是否展現主動性（不是被要求才做）
+3. 是否有同理心（理解他人的需求）
+4. 結果導向（有正面的影響）
+
+好的回答範例：
+「新同事剛來時對專案架構不熟，我主動整理了一份架構說明文件，還約了一小時幫他導覽程式碼。後來他很快就能獨立作業，他說這份文件對他幫助很大，我也把文件放到團隊 Wiki 讓其他新人參考。」`,
+                trait: 'comprehensive'
             }
         ];
 
@@ -1822,6 +2043,25 @@ jobs:
             return currentQuestions.value.filter(q => q.type === 'choice').length;
         });
 
+        // 人格特質分數計算
+        const personalityScores = computed(() => {
+            const scores = {
+                integrity: { score: 0, total: 0, label: '正直善良' },
+                kindness: { score: 0, total: 0, label: '善解人意' },
+                outgoing: { score: 0, total: 0, label: '活潑大方' },
+                sharing: { score: 0, total: 0, label: '願意分享' }
+            };
+            currentQuestions.value.forEach((q, idx) => {
+                if (q.trait && scores[q.trait] && q.type === 'choice') {
+                    scores[q.trait].total++;
+                    if (answers.value[idx] === q.answer) {
+                        scores[q.trait].score++;
+                    }
+                }
+            });
+            return scores;
+        });
+
         // Methods
         const startTest = () => {
             currentStep.value = 'test';
@@ -1901,7 +2141,8 @@ jobs:
             return q.type === 'choice' && answers.value[idx] === q.answer;
         };
 
-        const getTypeBadgeClass = (type) => {
+        const getTypeBadgeClass = (type, category) => {
+            if (category === '人格特質') return 'badge-secondary';
             switch (type) {
                 case 'choice': return 'badge-info';
                 case 'implement': return 'badge-warning';
@@ -1959,6 +2200,8 @@ jobs:
             toggleDarkMode,
             // 隨機名字
             randomStar,
+            // AI 助理
+            aiMessage,
             // 計時器
             timeRemaining,
             timerProgress,
@@ -1976,6 +2219,7 @@ jobs:
             answers,
             choiceScore,
             totalChoiceQuestions,
+            personalityScores,
             isSubmitting,
             submitError,
             startTest,
