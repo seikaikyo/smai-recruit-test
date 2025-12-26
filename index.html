@@ -427,6 +427,20 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
 
+        /* 測驗選項 */
+        .option-item {
+            background: var(--bg-light) !important;
+            border: 1px solid var(--bg-medium);
+        }
+        .option-item:hover {
+            background: var(--bg-medium) !important;
+            border-color: var(--primary-light);
+        }
+        .option-item.ring-2 {
+            background: white !important;
+            border-color: var(--primary-light) !important;
+        }
+
         /* Footer */
         .footer {
             background: var(--bg-medium) !important;
@@ -647,7 +661,7 @@
                     <!-- Multiple Choice -->
                     <div v-if="currentQuestion.type === 'choice'" class="mt-6 space-y-3">
                         <label v-for="(option, idx) in currentQuestion.options" :key="idx"
-                            class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors"
+                            class="flex items-center gap-3 p-3 rounded-lg option-item cursor-pointer transition-colors"
                             :class="{ 'ring-2 ring-primary bg-primary/10': answers[currentQuestionIndex] === idx }">
                             <input type="radio" :value="idx" v-model="answers[currentQuestionIndex]" class="radio radio-primary">
                             <span>{{ option }}</span>
