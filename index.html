@@ -1072,6 +1072,7 @@ createApp({
         const answers = ref({});
         const isSubmitting = ref(false);
         const submitError = ref('');
+        const shuffledQuestions = ref([]); // 洗牌後的題目
 
         // 主題系統
         // 主題配置（含背景色）
@@ -1715,6 +1716,151 @@ function validateUser(input) {
 好的回答範例：
 「新同事剛來時對專案架構不熟，我主動整理了一份架構說明文件，還約了一小時幫他導覽程式碼。後來他很快就能獨立作業，他說這份文件對他幫助很大，我也把文件放到團隊 Wiki 讓其他新人參考。」`,
                 trait: 'comprehensive'
+            },
+            // 新增情境題 - 正直誠信
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '你發現主管做了一個技術決策可能會造成未來的維護困難，你會怎麼做？',
+                options: [
+                    '私下向主管表達擔憂，提出具體的替代方案',
+                    '主管說了算，照做就好',
+                    '在會議上公開質疑主管的決定',
+                    '等問題發生再說「我早就知道會這樣」'
+                ],
+                answer: 0,
+                trait: 'integrity'
+            },
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '專案快要上線了，你發現自己寫的功能還有一些邊緣案例沒處理完，但時間很趕。你會？',
+                options: [
+                    '誠實向團隊說明情況，討論是延期還是先上線再補',
+                    '先上線，希望沒人發現這些問題',
+                    '加班趕工，但不告訴任何人',
+                    '這不是核心功能，應該沒關係'
+                ],
+                answer: 0,
+                trait: 'integrity'
+            },
+            // 新增情境題 - 善解人意
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '新來的實習生問了一個你覺得很基礎的問題，你會？',
+                options: [
+                    '耐心解釋，並推薦一些學習資源',
+                    '告訴他去看文件',
+                    '嘆口氣，然後快速解答',
+                    '心裡想「這也要問？」但還是回答了'
+                ],
+                answer: 0,
+                trait: 'kindness'
+            },
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '團隊成員因為私人因素請假，導致你需要臨時接手他的工作。你的反應是？',
+                options: [
+                    '理解他的狀況，主動接手並祝他好好休息',
+                    '雖然有點煩，但還是會幫忙',
+                    '向主管抱怨工作分配不公平',
+                    '只做最基本的，其他的等他回來處理'
+                ],
+                answer: 0,
+                trait: 'kindness'
+            },
+            // 新增情境題 - 活潑大方
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '公司舉辦 Hackathon，你會怎麼參與？',
+                options: [
+                    '積極組隊，主動找不同部門的人合作嘗試新想法',
+                    '加入別人組的隊伍',
+                    '觀望一下，看有沒有人來找我',
+                    '工作已經夠忙了，這種活動就算了'
+                ],
+                answer: 0,
+                trait: 'outgoing'
+            },
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '部門來了一位新同事，第一天你會？',
+                options: [
+                    '主動自我介紹，帶他認識環境和其他同事',
+                    '等主管介紹的時候再打招呼',
+                    '點頭微笑，繼續做自己的事',
+                    '等他來問我問題再說'
+                ],
+                answer: 0,
+                trait: 'outgoing'
+            },
+            // 新增情境題 - 願意分享
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '你解決了一個困擾團隊很久的技術問題，你會？',
+                options: [
+                    '寫一份詳細的解決方案文件，在團隊會議上分享',
+                    '在群組裡簡單說一下解法',
+                    '有人問再告訴他',
+                    '默默解決就好，不用特別說'
+                ],
+                answer: 0,
+                trait: 'sharing'
+            },
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '你參加了一個很棒的技術研討會，回來後你會？',
+                options: [
+                    '整理筆記，主動辦一場內部分享會',
+                    '在群組分享幾個重點',
+                    '有人問再說',
+                    '吸收消化就好，不需要特別分享'
+                ],
+                answer: 0,
+                trait: 'sharing'
+            },
+            // 新增情境題 - 綜合情境
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '專案延期了，主管問責任歸屬。事實上是因為需求一直在變，你會怎麼說？',
+                options: [
+                    '客觀說明：需求變更頻繁是主因，但我們也可以改進估算方式',
+                    '說是需求變更的問題，不關我的事',
+                    '不想惹事，說是我自己估算錯誤',
+                    '保持沉默，讓別人去解釋'
+                ],
+                answer: 0,
+                trait: 'integrity'
+            },
+            {
+                type: 'choice',
+                difficulty: '情境',
+                category: '人格特質',
+                question: '你注意到團隊的開發流程有可以優化的地方，你會？',
+                options: [
+                    '收集數據，準備改善提案在團隊會議上討論',
+                    '私下跟主管提一下',
+                    '這不是我的職責範圍',
+                    '反正講了也不會改'
+                ],
+                answer: 0,
+                trait: 'sharing'
             }
         ];
 
@@ -2412,8 +2558,12 @@ jobs:
 
         // Computed
         const currentQuestions = computed(() => {
+            // 優先使用洗牌後的題目
+            if (shuffledQuestions.value.length > 0) {
+                return shuffledQuestions.value;
+            }
+            // 尚未開始測驗時返回原始題目列表（用於顯示題數等）
             if (!selectedPosition.value) return [];
-            // 合併：基礎必備題 + 職位專屬題
             const positionQuestions = questionBanks[selectedPosition.value.id] || [];
             return [...coreQuestions, ...positionQuestions];
         });
@@ -2485,11 +2635,47 @@ jobs:
             }
         });
 
+        // 洗牌函數 (Fisher-Yates)
+        const shuffleArray = (array) => {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        };
+
+        // 洗牌題目選項
+        const shuffleQuestionOptions = (questions) => {
+            return questions.map(q => {
+                if (q.type !== 'choice' || !q.options) return q;
+
+                // 創建索引映射: [原索引, 選項內容]
+                const indexed = q.options.map((opt, i) => ({ idx: i, opt }));
+                const shuffled = shuffleArray(indexed);
+
+                // 找到正確答案的新位置
+                const newAnswer = shuffled.findIndex(item => item.idx === q.answer);
+
+                return {
+                    ...q,
+                    options: shuffled.map(item => item.opt),
+                    answer: newAnswer, // 更新正確答案索引
+                    originalAnswer: q.answer // 保留原始答案索引供 debug
+                };
+            });
+        };
+
         // Methods
         const startTest = () => {
             currentStep.value = 'test';
             currentQuestionIndex.value = 0;
             answers.value = {};
+
+            // 洗牌題目選項
+            const questions = [...coreQuestions, ...(questionBanks[selectedPosition.value.id] || [])];
+            shuffledQuestions.value = shuffleQuestionOptions(questions);
+
             // 重置行為追蹤
             behaviorData.value = {
                 responseTimes: [],
@@ -2680,6 +2866,7 @@ jobs:
             selectedPosition.value = null;
             currentQuestionIndex.value = 0;
             answers.value = {};
+            shuffledQuestions.value = []; // 清空洗牌後的題目
         };
 
         const isCorrect = (idx) => {
