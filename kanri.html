@@ -414,31 +414,40 @@ createApp({
         };
 
         onMounted(async () => {
-            // 等待 Clerk 載入
-            await new Promise(resolve => {
-                if (window.Clerk) {
-                    resolve();
-                } else {
-                    window.addEventListener('clerk:loaded', resolve);
+            try {
+                // 等待 Clerk 載入（最多 10 秒）
+                let attempts = 0;
+                while (!window.Clerk && attempts < 100) {
+                    await new Promise(r => setTimeout(r, 100));
+                    attempts++;
                 }
-            });
 
-            clerk = window.Clerk;
-            await clerk.load();
+                if (!window.Clerk) {
+                    loginError.value = 'Clerk 載入失敗，請重新整理';
+                    clerkLoading.value = false;
+                    return;
+                }
 
-            // 監聽登入狀態變化
-            clerk.addListener(({ user }) => {
+                clerk = window.Clerk;
+                await clerk.load();
+
+                // 監聽登入狀態變化
+                clerk.addListener(({ user }) => {
+                    if (user) {
+                        checkAuth();
+                    } else {
+                        isLoggedIn.value = false;
+                    }
+                });
+
                 clerkLoading.value = false;
-                if (user) {
+                if (clerk.user) {
                     checkAuth();
-                } else {
-                    isLoggedIn.value = false;
                 }
-            });
-
-            clerkLoading.value = false;
-            if (clerk.user) {
-                checkAuth();
+            } catch (err) {
+                console.error('Clerk init error:', err);
+                loginError.value = '初始化失敗，請重新整理';
+                clerkLoading.value = false;
             }
         });
 
