@@ -51,6 +51,23 @@
         .string { color: #ce9178; }
         .comment { color: #6a9955; }
         .function { color: #dcdcaa; }
+        /* Radio 選中狀態修復 */
+        .radio {
+            appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid hsl(var(--bc) / 0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .radio:checked {
+            border-color: hsl(var(--p));
+            background: radial-gradient(circle, hsl(var(--p)) 40%, transparent 45%);
+        }
+        .radio:hover {
+            border-color: hsl(var(--p));
+        }
     </style>
 </head>
 <body>
