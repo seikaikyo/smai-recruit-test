@@ -162,9 +162,13 @@ export default async function handler(request) {
     })
 
     if (!claudeResponse.ok) {
-      const error = await claudeResponse.text()
-      console.error('Claude API error:', error)
-      return new Response(JSON.stringify({ error: 'Failed to generate question' }), {
+      const errorText = await claudeResponse.text()
+      console.error('Claude API error:', claudeResponse.status, errorText)
+      return new Response(JSON.stringify({
+        error: 'Failed to generate question',
+        status: claudeResponse.status,
+        detail: errorText.slice(0, 200) // 回傳部分錯誤訊息供除錯
+      }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       })
