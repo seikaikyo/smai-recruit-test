@@ -26,7 +26,10 @@
                     <input type="password" v-model="password" @keyup.enter="login" class="input input-bordered" placeholder="請輸入密碼">
                 </div>
                 <div v-if="loginError" class="text-error text-sm mt-2">{{ loginError }}</div>
-                <button class="btn btn-primary mt-4" @click="login">登入</button>
+                <button class="btn btn-primary mt-4" @click="login" :disabled="loginLoading">
+                    <span v-if="loginLoading" class="loading loading-spinner loading-sm"></span>
+                    {{ loginLoading ? '驗證中...' : '登入' }}
+                </button>
             </div>
         </div>
     </div>
@@ -224,11 +227,11 @@ const { createApp, ref, computed, onMounted } = Vue;
 createApp({
     setup() {
         const API_URL = 'https://smai-mcp-center.onrender.com/api/recruit';
-        const ADMIN_PASSWORD = 'XtiZpnlIWDelEMe1fTEqvkqjjQFWutHr';
 
         const isLoggedIn = ref(false);
         const password = ref('');
         const loginError = ref('');
+        const loginLoading = ref(false);
         const loading = ref(false);
         const results = ref([]);
         const filterStatus = ref('');
@@ -250,14 +253,27 @@ createApp({
             });
         });
 
-        const login = () => {
-            if (password.value === ADMIN_PASSWORD) {
-                isLoggedIn.value = true;
-                loginError.value = '';
-                localStorage.setItem('smai_kanri_auth', 'true');
-                fetchResults();
-            } else {
-                loginError.value = '密碼錯誤';
+        const login = async () => {
+            loginLoading.value = true;
+            loginError.value = '';
+            try {
+                const res = await fetch(`${API_URL}/auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: password.value })
+                });
+                if (res.ok) {
+                    isLoggedIn.value = true;
+                    localStorage.setItem('smai_kanri_auth', 'true');
+                    fetchResults();
+                } else {
+                    const data = await res.json();
+                    loginError.value = data.detail || '密碼錯誤';
+                }
+            } catch (err) {
+                loginError.value = '連線失敗，請稍後再試';
+            } finally {
+                loginLoading.value = false;
             }
         };
 
@@ -366,6 +382,7 @@ createApp({
             isLoggedIn,
             password,
             loginError,
+            loginLoading,
             loading,
             results,
             filterStatus,
