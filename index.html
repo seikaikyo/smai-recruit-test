@@ -11,84 +11,182 @@
     <style>
         [v-cloak] { display: none; }
 
-        /* 日系莫蘭迪暖色系 */
+        /* 主題系統 - 日系莫蘭迪風格 */
         :root {
-            --warm-cream: #FDF8F3;
-            --warm-beige: #F5EDE4;
-            --warm-tan: #E8DED3;
-            --warm-caramel: #C4A77D;
-            --warm-cocoa: #8B7355;
-            --warm-brown: #5D4E37;
-            --soft-pink: #E8C4C4;
-            --soft-sage: #B4C4AE;
-            --soft-sky: #A8C5D9;
+            /* 焦糖奶茶 (預設) */
+            --primary-light: #C4A77D;
+            --primary-dark: #8B7355;
+            --primary-text: #5D4E37;
+            --bg-cream: #FDF8F3;
+            --bg-light: #F5EDE4;
+            --bg-medium: #E8DED3;
+            --accent-pink: #E8C4C4;
+            --accent-green: #B4C4AE;
+            --accent-blue: #A8C5D9;
+        }
+
+        [data-theme="matcha"] {
+            --primary-light: #9DB4A0;
+            --primary-dark: #6B8E6B;
+            --primary-text: #3D5A3D;
+            --bg-cream: #F5F9F5;
+            --bg-light: #E8F0E8;
+            --bg-medium: #D4E4D4;
+            --accent-pink: #E8D4D4;
+            --accent-green: #A8C4A8;
+            --accent-blue: #B4D4E0;
+        }
+
+        [data-theme="sakura"] {
+            --primary-light: #E8B4B4;
+            --primary-dark: #C48888;
+            --primary-text: #6B4444;
+            --bg-cream: #FDF8F8;
+            --bg-light: #F9ECEC;
+            --bg-medium: #F0E0E0;
+            --accent-pink: #F0C4C4;
+            --accent-green: #C4D8C4;
+            --accent-blue: #C4D4E8;
+        }
+
+        [data-theme="fuji"] {
+            --primary-light: #B4A8C4;
+            --primary-dark: #887898;
+            --primary-text: #4A4058;
+            --bg-cream: #FAF8FC;
+            --bg-light: #F0ECF4;
+            --bg-medium: #E4DEE8;
+            --accent-pink: #E0C8D8;
+            --accent-green: #C0D0C0;
+            --accent-blue: #C8D0E0;
+        }
+
+        /* 全域過渡動畫 */
+        * {
+            transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease, box-shadow 0.3s ease;
         }
 
         body {
-            background: linear-gradient(135deg, var(--warm-cream) 0%, var(--warm-beige) 100%);
-            color: var(--warm-brown);
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light) 100%);
+            color: var(--primary-text);
+            min-height: 100vh;
         }
 
-        /* Header 溫暖漸層 */
+        /* Header 漸層 */
         .navbar {
-            background: linear-gradient(90deg, var(--warm-caramel) 0%, var(--warm-cocoa) 100%) !important;
+            background: linear-gradient(90deg, var(--primary-light) 0%, var(--primary-dark) 100%) !important;
             color: white !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
+
+        /* 主題切換器 */
+        .theme-switcher {
+            display: flex;
+            gap: 8px;
+            padding: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+        }
+        .theme-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .theme-btn:hover {
+            transform: scale(1.15);
+            border-color: white;
+        }
+        .theme-btn.active {
+            border-color: white;
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+        }
+        .theme-btn.active::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+        }
+        .theme-caramel { background: linear-gradient(135deg, #C4A77D, #8B7355); }
+        .theme-matcha { background: linear-gradient(135deg, #9DB4A0, #6B8E6B); }
+        .theme-sakura { background: linear-gradient(135deg, #E8B4B4, #C48888); }
+        .theme-fuji { background: linear-gradient(135deg, #B4A8C4, #887898); }
 
         /* 卡片樣式 */
         .card {
             background: white !important;
-            border: 1px solid var(--warm-tan) !important;
-            box-shadow: 0 4px 20px rgba(139, 115, 85, 0.1) !important;
+            border: 1px solid var(--bg-medium) !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+            border-radius: 16px !important;
         }
 
         /* 按鈕樣式 */
         .btn-primary {
-            background: linear-gradient(135deg, var(--warm-caramel) 0%, var(--warm-cocoa) 100%) !important;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%) !important;
             border: none !important;
             color: white !important;
-            transition: all 0.3s ease !important;
+            border-radius: 12px !important;
+            font-weight: 600 !important;
         }
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(196, 167, 125, 0.4) !important;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
         }
         .btn-primary:disabled {
-            background: var(--warm-tan) !important;
+            background: var(--bg-medium) !important;
             opacity: 0.6;
+            transform: none;
+        }
+        .btn-ghost {
+            color: var(--primary-text) !important;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), #8BA888) !important;
+            color: white !important;
         }
 
         /* Alert 樣式 */
         .alert-info {
-            background: linear-gradient(135deg, var(--soft-sky) 0%, #C5D9E8 100%) !important;
+            background: linear-gradient(135deg, var(--accent-blue), #B8D4E8) !important;
             border: none !important;
-            color: var(--warm-brown) !important;
+            color: var(--primary-text) !important;
+            border-radius: 12px !important;
         }
         .alert-warning {
-            background: linear-gradient(135deg, #F5E6C8 0%, #EDD9B5 100%) !important;
+            background: linear-gradient(135deg, #F5E6C8, #EDD9B5) !important;
             border: none !important;
-            color: var(--warm-brown) !important;
+            color: var(--primary-text) !important;
+            border-radius: 12px !important;
         }
 
         /* 進度條 */
         .progress {
-            height: 12px !important;
-            background: var(--warm-tan) !important;
-            border-radius: 6px !important;
+            height: 10px !important;
+            background: var(--bg-medium) !important;
+            border-radius: 5px !important;
             overflow: hidden !important;
         }
         .progress::-webkit-progress-bar {
-            background: var(--warm-tan);
-            border-radius: 6px;
+            background: var(--bg-medium);
+            border-radius: 5px;
         }
         .progress::-webkit-progress-value {
-            background: linear-gradient(90deg, var(--warm-caramel) 0%, var(--warm-cocoa) 100%);
-            border-radius: 6px;
-            transition: width 0.3s ease;
+            background: linear-gradient(90deg, var(--primary-light), var(--primary-dark));
+            border-radius: 5px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .progress::-moz-progress-bar {
-            background: linear-gradient(90deg, var(--warm-caramel) 0%, var(--warm-cocoa) 100%);
-            border-radius: 6px;
+            background: linear-gradient(90deg, var(--primary-light), var(--primary-dark));
+            border-radius: 5px;
         }
 
         /* Radio 選中狀態 */
@@ -96,69 +194,87 @@
             appearance: none;
             width: 1.25rem;
             height: 1.25rem;
-            border: 2px solid var(--warm-tan);
+            border: 2px solid var(--bg-medium);
             border-radius: 50%;
             cursor: pointer;
-            transition: all 0.2s;
             background: white;
         }
         .radio:checked {
-            border-color: var(--warm-caramel);
-            background: radial-gradient(circle, var(--warm-caramel) 40%, white 45%);
+            border-color: var(--primary-light);
+            background: radial-gradient(circle, var(--primary-light) 40%, white 45%);
         }
         .radio:hover {
-            border-color: var(--warm-caramel);
+            border-color: var(--primary-light);
         }
 
-        /* 選項卡片 */
+        /* 職位選項卡片 */
         .card.bg-base-200 {
-            background: var(--warm-beige) !important;
+            background: var(--bg-light) !important;
             border: 2px solid transparent !important;
-            transition: all 0.2s ease !important;
+            border-radius: 12px !important;
         }
         .card.bg-base-200:hover {
-            background: var(--warm-tan) !important;
-            border-color: var(--warm-caramel) !important;
+            background: var(--bg-medium) !important;
+            border-color: var(--primary-light) !important;
+            transform: translateY(-2px);
         }
         .card.ring-2 {
-            border-color: var(--warm-caramel) !important;
+            border-color: var(--primary-light) !important;
             background: white !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
         }
 
         /* Badge 標籤 */
         .badge {
-            border: 1px solid var(--warm-tan) !important;
-            background: var(--warm-beige) !important;
-            color: var(--warm-brown) !important;
+            border: 1px solid var(--bg-medium) !important;
+            background: var(--bg-light) !important;
+            color: var(--primary-text) !important;
+            border-radius: 8px !important;
         }
-        .badge-info { background: var(--soft-sky) !important; }
+        .badge-info { background: var(--accent-blue) !important; }
         .badge-warning { background: #F5E6C8 !important; }
-        .badge-error { background: var(--soft-pink) !important; }
-        .badge-success { background: var(--soft-sage) !important; }
-        .badge-neutral { background: var(--warm-tan) !important; }
-        .badge-ghost { background: transparent !important; border: 1px dashed var(--warm-tan) !important; }
+        .badge-error { background: var(--accent-pink) !important; }
+        .badge-success { background: var(--accent-green) !important; }
+        .badge-neutral { background: var(--bg-medium) !important; }
+        .badge-ghost {
+            background: transparent !important;
+            border: 1px dashed var(--bg-medium) !important;
+        }
 
         /* 輸入框 */
         .input, .textarea {
-            border: 2px solid var(--warm-tan) !important;
+            border: 2px solid var(--bg-medium) !important;
             background: white !important;
-            transition: all 0.2s ease !important;
+            border-radius: 10px !important;
         }
         .input:focus, .textarea:focus {
-            border-color: var(--warm-caramel) !important;
-            box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.2) !important;
+            border-color: var(--primary-light) !important;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.05) !important;
             outline: none !important;
         }
 
-        /* 選項列表 hover */
-        label.flex:hover {
-            background: var(--warm-beige) !important;
+        /* 選項列表 */
+        .option-card {
+            background: var(--bg-light);
+            border-radius: 10px;
+            padding: 12px 16px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .option-card:hover {
+            background: var(--bg-medium);
+            border-color: var(--primary-light);
+        }
+        .option-card.selected {
+            background: white;
+            border-color: var(--primary-light);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
 
         /* Footer */
         .footer {
-            background: var(--warm-tan) !important;
-            color: var(--warm-brown) !important;
+            background: var(--bg-medium) !important;
+            color: var(--primary-text) !important;
         }
 
         /* Code Block */
@@ -166,29 +282,53 @@
             background: #2D2A26;
             color: #E8DED3;
             padding: 1rem;
-            border-radius: 0.75rem;
+            border-radius: 12px;
             font-family: 'Consolas', 'Monaco', monospace;
             font-size: 0.875rem;
             overflow-x: auto;
             white-space: pre;
-            border: 1px solid var(--warm-cocoa);
+            border: 1px solid var(--primary-dark);
         }
-        .keyword { color: #C4A77D; }
-        .string { color: #E8C4C4; }
-        .comment { color: #B4C4AE; }
-        .function { color: #A8C5D9; }
+        .keyword { color: var(--primary-light); }
+        .string { color: var(--accent-pink); }
+        .comment { color: var(--accent-green); }
+        .function { color: var(--accent-blue); }
 
-        /* Stats 統計 */
+        /* Stats */
         .stats {
             background: white !important;
-            border: 1px solid var(--warm-tan) !important;
+            border: 1px solid var(--bg-medium) !important;
+            border-radius: 12px !important;
         }
-        .stat-value { color: var(--warm-cocoa) !important; }
+        .stat-value { color: var(--primary-dark) !important; }
 
         /* Collapse */
         .collapse {
-            background: var(--warm-beige) !important;
-            border: 1px solid var(--warm-tan) !important;
+            background: var(--bg-light) !important;
+            border: 1px solid var(--bg-medium) !important;
+            border-radius: 12px !important;
+        }
+
+        /* 動畫效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-body { animation: fadeIn 0.4s ease; }
+
+        /* 主題名稱 tooltip */
+        .theme-btn[title]:hover::before {
+            content: attr(title);
+            position: absolute;
+            bottom: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -199,8 +339,18 @@
         <div class="flex-1">
             <span class="text-xl font-bold px-4">SMAI 技術人才測驗系統</span>
         </div>
-        <div class="flex-none px-4" v-if="currentStep !== 'welcome'">
-            <span class="badge badge-ghost">{{ selectedPosition?.name }}</span>
+        <div class="flex-none px-4 flex items-center gap-4">
+            <!-- 主題切換器 -->
+            <div class="theme-switcher">
+                <button
+                    v-for="t in themes"
+                    :key="t.id"
+                    :title="t.name"
+                    :class="['theme-btn', 'theme-' + t.id, { active: currentTheme === t.id }]"
+                    @click="setTheme(t.id)">
+                </button>
+            </div>
+            <span v-if="currentStep !== 'welcome'" class="badge badge-ghost">{{ selectedPosition?.name }}</span>
         </div>
     </div>
 
@@ -430,6 +580,36 @@ createApp({
         const answers = ref({});
         const isSubmitting = ref(false);
         const submitError = ref('');
+
+        // 主題系統
+        const themes = ref([
+            { id: 'caramel', name: '焦糖奶茶' },
+            { id: 'matcha', name: '抹茶清新' },
+            { id: 'sakura', name: '櫻花柔粉' },
+            { id: 'fuji', name: '藤紫優雅' }
+        ]);
+        const currentTheme = ref(localStorage.getItem('smai-theme') || 'caramel');
+
+        // 初始化主題
+        const initTheme = () => {
+            if (currentTheme.value !== 'caramel') {
+                document.documentElement.setAttribute('data-theme', currentTheme.value);
+            }
+        };
+
+        // 設定主題
+        const setTheme = (themeId) => {
+            currentTheme.value = themeId;
+            localStorage.setItem('smai-theme', themeId);
+            if (themeId === 'caramel') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', themeId);
+            }
+        };
+
+        // 頁面載入時初始化主題
+        initTheme();
 
         // API URL
         const API_URL = 'https://smai-mcp-center.onrender.com/api/recruit';
@@ -1015,6 +1195,11 @@ CMD ["python", "app.py"]`
         };
 
         return {
+            // 主題
+            themes,
+            currentTheme,
+            setTheme,
+            // 原有
             currentStep,
             userName,
             userEmail,
