@@ -499,13 +499,30 @@
             <!-- 主題切換器 -->
             <div class="theme-switcher">
                 <button
-                    v-for="t in themes"
+                    v-for="t in themes.filter(x => x.id !== 'dark')"
                     :key="t.id"
                     :title="t.name"
                     :class="['theme-btn', 'theme-' + t.id, { active: currentTheme === t.id }]"
                     @click="setTheme(t.id)">
                 </button>
             </div>
+            <!-- 日夜切換 -->
+            <button class="btn btn-ghost btn-circle" @click="toggleDarkMode" :title="currentTheme === 'dark' ? '切換日間模式' : '切換夜間模式'">
+                <svg v-if="currentTheme !== 'dark'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+            </button>
             <span v-if="currentStep !== 'welcome'" class="badge badge-ghost">{{ selectedPosition?.name }}</span>
         </div>
     </div>
@@ -824,6 +841,20 @@ createApp({
                 document.documentElement.setAttribute('data-theme', themeId);
             }
             applyThemeBackground(themeId);
+        };
+
+        // 日夜切換
+        const previousLightTheme = ref(localStorage.getItem('smai-light-theme') || 'orange');
+        const toggleDarkMode = () => {
+            if (currentTheme.value === 'dark') {
+                // 切回日間模式
+                setTheme(previousLightTheme.value);
+            } else {
+                // 記住當前主題，切換到深色
+                previousLightTheme.value = currentTheme.value;
+                localStorage.setItem('smai-light-theme', currentTheme.value);
+                setTheme('dark');
+            }
         };
 
         // 頁面載入時初始化主題
@@ -1567,6 +1598,7 @@ CMD ["python", "app.py"]`
             themes,
             currentTheme,
             setTheme,
+            toggleDarkMode,
             // 隨機名字
             randomStar,
             // 計時器
