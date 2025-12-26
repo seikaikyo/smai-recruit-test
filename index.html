@@ -1600,6 +1600,165 @@ function validateUser(input) {
     }
 }`
             },
+            // ============ 文件撰寫能力 ============
+            {
+                type: 'choice',
+                difficulty: '基礎',
+                category: '文件撰寫',
+                question: '一份好的 API 文件應該包含哪些基本要素？',
+                options: [
+                    '端點路徑、HTTP 方法、請求/回應範例、錯誤碼說明',
+                    '只需要端點路徑就夠了',
+                    '程式碼註解就是最好的文件',
+                    '口頭說明比文件更有效率'
+                ],
+                answer: 0
+            },
+            {
+                type: 'choice',
+                difficulty: '基礎',
+                category: '文件撰寫',
+                question: 'README.md 檔案的主要用途是什麼？',
+                options: [
+                    '專案說明、安裝步驟、使用方式、貢獻指南',
+                    '記錄個人開發日誌',
+                    '存放暫時的程式碼片段',
+                    '只給主管看的進度報告'
+                ],
+                answer: 0
+            },
+            {
+                type: 'choice',
+                difficulty: '中等',
+                category: '文件撰寫',
+                question: '哪種工具常用於自動產生 API 文件？',
+                options: [
+                    'Swagger/OpenAPI',
+                    'Microsoft Word',
+                    'Notepad',
+                    'Excel'
+                ],
+                answer: 0
+            },
+            // ============ 單元測試能力 ============
+            {
+                type: 'choice',
+                difficulty: '基礎',
+                category: '單元測試',
+                question: '單元測試的主要目的是什麼？',
+                options: [
+                    '驗證單一函數或模組的行為是否符合預期',
+                    '測試整個系統的效能',
+                    '確認 UI 外觀正確',
+                    '檢查資料庫連線'
+                ],
+                answer: 0
+            },
+            {
+                type: 'choice',
+                difficulty: '基礎',
+                category: '單元測試',
+                question: '測試金字塔（Test Pyramid）中，哪種測試應該數量最多？',
+                options: [
+                    '單元測試（Unit Tests）',
+                    '整合測試（Integration Tests）',
+                    'E2E 測試（End-to-End Tests）',
+                    '手動測試'
+                ],
+                answer: 0
+            },
+            {
+                type: 'choice',
+                difficulty: '中等',
+                category: '單元測試',
+                question: '什麼是 Mock（模擬物件）？在測試中有什麼用途？',
+                options: [
+                    '模擬外部依賴（如 API、資料庫），讓測試可以獨立執行',
+                    '一種新的程式語言',
+                    '用來加速程式執行的工具',
+                    '資料庫備份工具'
+                ],
+                answer: 0
+            },
+            {
+                type: 'choice',
+                difficulty: '中等',
+                category: '單元測試',
+                question: 'AAA 模式（Arrange-Act-Assert）是什麼？',
+                options: [
+                    '測試的結構模式：準備資料、執行動作、驗證結果',
+                    '一種加密演算法',
+                    '資料庫設計模式',
+                    'API 認證方式'
+                ],
+                answer: 0
+            },
+            // ============ 系統測試能力 ============
+            {
+                type: 'choice',
+                difficulty: '基礎',
+                category: '系統測試',
+                question: '整合測試（Integration Test）和單元測試的主要差異是什麼？',
+                options: [
+                    '整合測試驗證多個模組之間的互動，單元測試只測試單一模組',
+                    '整合測試比較簡單，單元測試比較複雜',
+                    '兩者完全相同',
+                    '整合測試不需要寫程式碼'
+                ],
+                answer: 0
+            },
+            {
+                type: 'choice',
+                difficulty: '中等',
+                category: '系統測試',
+                question: 'E2E（End-to-End）測試的特點是什麼？',
+                options: [
+                    '模擬真實用戶操作，從前端到後端完整測試整個流程',
+                    '只測試後端 API',
+                    '只測試資料庫',
+                    '只測試 CSS 樣式'
+                ],
+                answer: 0
+            },
+            {
+                type: 'choice',
+                difficulty: '中等',
+                category: '系統測試',
+                question: '哪種工具常用於前端 E2E 測試？',
+                options: [
+                    'Cypress 或 Playwright',
+                    'Photoshop',
+                    'Excel',
+                    'Notepad'
+                ],
+                answer: 0
+            },
+            {
+                type: 'implement',
+                difficulty: '中等',
+                category: '測試與文件',
+                question: '假設你完成了一個「使用者登入」功能，請說明你會如何撰寫測試和文件？請包含：1) 會寫哪些單元測試案例 2) 會寫哪些整合測試 3) API 文件會包含什麼內容',
+                referenceAnswer: `參考答案重點：
+
+1. 單元測試案例：
+   - 正確帳密應回傳成功
+   - 錯誤密碼應回傳失敗
+   - 不存在的帳號應回傳失敗
+   - 空白帳密應回傳驗證錯誤
+   - 密碼錯誤超過 N 次應鎖定帳號
+
+2. 整合測試：
+   - 測試實際資料庫連線
+   - 測試 Session/JWT 產生
+   - 測試登入後權限檢查
+
+3. API 文件內容：
+   - 端點：POST /api/auth/login
+   - 請求格式：{ email, password }
+   - 成功回應：{ token, user }
+   - 錯誤回應：401, 400, 429
+   - 使用範例（curl 或程式碼）`
+            },
             // 人格特質題 - 正直善良
             {
                 type: 'choice',
@@ -1943,6 +2102,46 @@ export function useDebounce(value, delay = 300) {
 // 使用方式：
 // const searchText = ref('')
 // const debouncedSearch = useDebounce(searchText, 500)`
+                },
+                // Vue 測試相關
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'Vue 測試',
+                    question: 'Vue 3 官方推薦使用哪個測試框架進行單元測試？',
+                    options: [
+                        'Vitest',
+                        'Mocha',
+                        'Jasmine',
+                        'QUnit'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'Vue 測試',
+                    question: '@vue/test-utils 的 mount() 和 shallowMount() 有什麼差別？',
+                    options: [
+                        'mount 會渲染子組件，shallowMount 只渲染當前組件（子組件為 stub）',
+                        '兩者完全相同',
+                        'shallowMount 比較慢',
+                        'mount 不支援 props'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'Vue 文件',
+                    question: '哪個工具可以用來為 Vue 組件建立互動式文件和視覺測試？',
+                    options: [
+                        'Storybook',
+                        'Word',
+                        'Notepad',
+                        'Paint'
+                    ],
+                    answer: 0
                 }
             ],
             fullstack: [
@@ -2028,6 +2227,33 @@ GET /api/products?page=1&limit=20&sort=price:desc&filter[category]=electronics
 2. 排序用 sort=field:direction
 3. 篩選用 filter[field]=value
 4. 回傳 total 讓前端知道總筆數`
+                },
+                // Fullstack 測試相關
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: '全端測試',
+                    question: 'Prisma 的測試最佳實踐是什麼？',
+                    options: [
+                        '使用測試資料庫，每次測試前清空資料',
+                        '直接測試正式資料庫',
+                        '不需要測試資料庫操作',
+                        '只用 console.log 檢查'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: '全端文件',
+                    question: 'OpenAPI (Swagger) 規範的主要用途是？',
+                    options: [
+                        '標準化 RESTful API 的描述格式，可自動產生文件和客戶端程式碼',
+                        '資料庫設計工具',
+                        '前端 UI 框架',
+                        '版本控制系統'
+                    ],
+                    answer: 0
                 }
             ],
             angular: [
@@ -2129,6 +2355,46 @@ async deleteItem() {
         // 執行刪除
     }
 }`
+                },
+                // Angular 測試相關
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'Angular 測試',
+                    question: 'Angular 預設使用哪個測試框架？',
+                    options: [
+                        'Jasmine + Karma',
+                        'Jest',
+                        'Mocha',
+                        'QUnit'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'Angular 測試',
+                    question: 'Angular 的 TestBed 主要用途是什麼？',
+                    options: [
+                        '設定測試模組，提供依賴注入環境',
+                        '資料庫測試工具',
+                        'CSS 測試工具',
+                        '效能測試工具'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'Angular 文件',
+                    question: 'Compodoc 是用來做什麼的？',
+                    options: [
+                        '自動產生 Angular 專案的文件',
+                        '編譯 Angular 程式碼',
+                        '資料庫遷移工具',
+                        '打包工具'
+                    ],
+                    answer: 0
                 }
             ],
             python: [
@@ -2224,6 +2490,59 @@ async def register(
 - API 回應更快（不等 Email）
 - 用戶體驗更好
 - Email 失敗不影響註冊結果`
+                },
+                // Python 測試相關
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'Python 測試',
+                    question: 'Python 最常用的測試框架是？',
+                    options: [
+                        'pytest',
+                        'unittest',
+                        'nose',
+                        '以上都常用，但 pytest 最流行'
+                    ],
+                    answer: 3
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'Python 測試',
+                    question: 'FastAPI 的 TestClient 是基於哪個套件？',
+                    options: [
+                        'httpx (Starlette TestClient)',
+                        'requests',
+                        'urllib',
+                        'aiohttp'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'Python 文件',
+                    question: '哪個工具可以自動產生 Python API 文件？',
+                    options: [
+                        'Sphinx 或 MkDocs',
+                        'Word',
+                        'Notepad',
+                        'Excel'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'Python 文件',
+                    question: 'FastAPI 內建支援自動產生什麼格式的 API 文件？',
+                    options: [
+                        'OpenAPI (Swagger UI) 和 ReDoc',
+                        '只有 PDF',
+                        '只有 Word',
+                        '不支援自動產生文件'
+                    ],
+                    answer: 0
                 }
             ],
             ai: [
@@ -2323,6 +2642,46 @@ def frame_generator(cap):
     {"start": 5.2, "end": 12.8, "action": "加工"},
     ...
 ]`
+                },
+                // AI/ML 測試相關
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'AI 測試',
+                    question: '模型評估時，Precision（精確率）和 Recall（召回率）的差別是？',
+                    options: [
+                        'Precision 關注預測正確的比例，Recall 關注實際正例被找到的比例',
+                        '兩者完全相同',
+                        'Precision 越高越好，Recall 不重要',
+                        '只有分類問題才需要這些指標'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'AI 測試',
+                    question: 'A/B 測試在 AI 模型部署中的用途是？',
+                    options: [
+                        '比較新舊模型在真實環境的效果',
+                        '訓練模型用的',
+                        '資料清洗用的',
+                        '只是一種命名慣例'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'AI 文件',
+                    question: '好的 AI 模型文件應該包含什麼？',
+                    options: [
+                        '訓練資料描述、模型架構、評估指標、使用限制',
+                        '只需要程式碼就夠了',
+                        '只需要 accuracy 數字',
+                        '不需要文件，模型會自己說明'
+                    ],
+                    answer: 0
                 }
             ],
             devops: [
@@ -2434,6 +2793,46 @@ jobs:
 - test 失敗就不會建置
 - 用 needs 確保順序
 - 用 secrets 保護敏感資訊`
+                },
+                // DevOps 測試相關
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'DevOps 測試',
+                    question: 'CI/CD Pipeline 中的測試階段通常包含哪些？',
+                    options: [
+                        '單元測試、整合測試、E2E 測試、安全掃描',
+                        '只需要手動測試',
+                        '不需要測試，直接部署',
+                        '只需要 Lint 檢查'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'DevOps 測試',
+                    question: '什麼是 Smoke Test（冒煙測試）？',
+                    options: [
+                        '部署後快速驗證核心功能是否正常運作',
+                        '測試系統會不會冒煙',
+                        '壓力測試的另一種說法',
+                        '資安滲透測試'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'DevOps 文件',
+                    question: 'Infrastructure as Code (IaC) 文件的好處是？',
+                    options: [
+                        '基礎設施設定可版本控制、可重現、可審核',
+                        '只是另一種文件格式',
+                        '用來寫程式文件的',
+                        '只有大公司才需要'
+                    ],
+                    answer: 0
                 }
             ],
             iot: [
@@ -2552,6 +2951,46 @@ jobs:
 - 邊緣快取避免資料丟失
 - MQTT QoS 1 確保送達
 - 時序資料庫處理大量寫入`
+                },
+                // IoT 測試相關
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'IoT 測試',
+                    question: 'IoT 系統的硬體整合測試（HIL）主要測試什麼？',
+                    options: [
+                        '軟體與實際硬體的互動是否正常',
+                        '只測試軟體邏輯',
+                        '只測試 UI 外觀',
+                        '只測試資料庫'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'IoT 測試',
+                    question: '如何測試 MQTT 通訊是否正常？',
+                    options: [
+                        '使用 MQTT 客戶端工具（如 MQTT Explorer）訂閱並檢查訊息',
+                        '只看程式碼就知道了',
+                        '不需要測試通訊',
+                        '只測試資料庫'
+                    ],
+                    answer: 0
+                },
+                {
+                    type: 'choice',
+                    difficulty: '中等',
+                    category: 'IoT 文件',
+                    question: 'IoT 專案的技術文件應該包含什麼？',
+                    options: [
+                        '硬體接線圖、通訊協定規格、資料格式、系統架構圖',
+                        '只需要程式碼就夠了',
+                        '只需要 UI 截圖',
+                        '不需要文件'
+                    ],
+                    answer: 0
                 }
             ]
         };
