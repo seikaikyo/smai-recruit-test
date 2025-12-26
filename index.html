@@ -578,14 +578,20 @@
 
     <!-- AI 助理提示區 -->
     <div v-if="currentStep === 'test'" class="ai-assistant-bar">
-        <div class="container mx-auto px-4 py-2 flex items-center gap-3">
-            <div class="ai-avatar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
-                </svg>
+        <div class="container mx-auto px-4 py-2 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="ai-avatar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+                    </svg>
+                </div>
+                <div class="ai-message">
+                    <span class="typing-text">{{ aiMessage }}</span>
+                </div>
             </div>
-            <div class="ai-message">
-                <span class="typing-text">{{ aiMessage }}</span>
+            <div v-if="behaviorStats.questionCount > 0" class="hidden sm:flex items-center gap-3 text-xs opacity-70">
+                <span>平均 {{ behaviorStats.avgResponseTime }}s</span>
+                <span>正確率 {{ behaviorStats.correctRate }}%</span>
             </div>
         </div>
     </div>
@@ -712,7 +718,7 @@
                         <label v-for="(option, idx) in currentQuestion.options" :key="idx"
                             class="flex items-center gap-3 p-3 rounded-lg option-item cursor-pointer transition-colors"
                             :class="{ 'ring-2 ring-primary bg-primary/10': answers[currentQuestionIndex] === idx }">
-                            <input type="radio" :value="idx" v-model="answers[currentQuestionIndex]" class="radio radio-primary">
+                            <input type="radio" :value="idx" v-model="answers[currentQuestionIndex]" @change="trackAnswerChange" class="radio radio-primary">
                             <span>{{ option }}</span>
                         </label>
                     </div>
@@ -1019,6 +1025,103 @@ createApp({
                 timerInterval.value = null;
             }
         };
+
+        // 行為追蹤系統
+        const behaviorData = ref({
+            responseTimes: [],        // 每題回答時間
+            answerChanges: [],        // 每題更改答案次數
+            startTime: null,          // 當題開始時間
+            currentChangeCount: 0,    // 當題更改次數
+            consecutiveCorrect: 0,    // 連續答對
+            consecutiveWrong: 0       // 連續答錯
+        });
+
+        // 開始追蹤當題
+        const startTracking = () => {
+            behaviorData.value.startTime = Date.now();
+            behaviorData.value.currentChangeCount = 0;
+        };
+
+        // 記錄答案變更
+        const trackAnswerChange = () => {
+            behaviorData.value.currentChangeCount++;
+        };
+
+        // 記錄當題完成
+        const recordQuestionComplete = () => {
+            const responseTime = (Date.now() - behaviorData.value.startTime) / 1000;
+            behaviorData.value.responseTimes.push(responseTime);
+            behaviorData.value.answerChanges.push(behaviorData.value.currentChangeCount);
+        };
+
+        // 計算行為統計
+        const behaviorStats = computed(() => {
+            const times = behaviorData.value.responseTimes;
+            const changes = behaviorData.value.answerChanges;
+
+            if (times.length === 0) {
+                return {
+                    avgResponseTime: 0,
+                    totalChanges: 0,
+                    correctRate: 0,
+                    pattern: 'starting'
+                };
+            }
+
+            const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+            const totalChanges = changes.reduce((a, b) => a + b, 0);
+
+            // 計算目前正確率
+            let correct = 0;
+            let total = 0;
+            currentQuestions.value.forEach((q, idx) => {
+                if (q.type === 'choice' && answers.value[idx] !== undefined) {
+                    total++;
+                    if (answers.value[idx] === q.answer) correct++;
+                }
+            });
+
+            const correctRate = total > 0 ? correct / total : 0;
+
+            // 判斷行為模式
+            let pattern = 'normal';
+            if (avgTime < 15 && correctRate > 0.7) pattern = 'expert';
+            else if (avgTime < 15 && correctRate < 0.5) pattern = 'rushing';
+            else if (avgTime > 40) pattern = 'careful';
+            else if (totalChanges > times.length * 0.5) pattern = 'hesitant';
+
+            return {
+                avgResponseTime: Math.round(avgTime),
+                totalChanges,
+                correctRate: Math.round(correctRate * 100),
+                pattern,
+                questionCount: times.length
+            };
+        });
+
+        // 動態 AI 訊息（根據行為更新）
+        const dynamicAiMessage = computed(() => {
+            const stats = behaviorStats.value;
+            const q = currentQuestion.value;
+
+            if (!q.type) return '準備好了嗎？讓我們開始吧！';
+
+            // 根據行為模式調整訊息
+            if (stats.pattern === 'expert') {
+                return '你的反應又快又準，真厲害！';
+            } else if (stats.pattern === 'rushing') {
+                return '慢一點沒關係，想清楚再選喔';
+            } else if (stats.pattern === 'careful') {
+                return '謹慎是好事，相信你的判斷';
+            } else if (stats.pattern === 'hesitant') {
+                return '相信你的第一直覺吧！';
+            }
+
+            // 預設訊息
+            const category = q.category === '人格特質' ? 'personality' : q.type;
+            const messages = aiMessages[category] || aiMessages.choice;
+            return messages[currentQuestionIndex.value % messages.length];
+        });
 
         // 鍵盤快捷鍵
         const setupKeyboardShortcuts = () => {
@@ -2067,21 +2170,34 @@ jobs:
             currentStep.value = 'test';
             currentQuestionIndex.value = 0;
             answers.value = {};
+            // 重置行為追蹤
+            behaviorData.value = {
+                responseTimes: [],
+                answerChanges: [],
+                startTime: null,
+                currentChangeCount: 0,
+                consecutiveCorrect: 0,
+                consecutiveWrong: 0
+            };
             startTimer();
+            startTracking();
             setupKeyboardShortcuts();
         };
 
         const nextQuestion = () => {
             if (currentQuestionIndex.value < currentQuestions.value.length - 1) {
+                recordQuestionComplete(); // 記錄當題行為
                 currentQuestionIndex.value++;
-                startTimer(); // 重置計時器
+                startTimer();
+                startTracking(); // 開始追蹤下一題
             }
         };
 
         const prevQuestion = () => {
             if (currentQuestionIndex.value > 0) {
                 currentQuestionIndex.value--;
-                startTimer(); // 重置計時器
+                startTimer();
+                startTracking();
             }
         };
 
@@ -2201,7 +2317,9 @@ jobs:
             // 隨機名字
             randomStar,
             // AI 助理
-            aiMessage,
+            aiMessage: dynamicAiMessage,
+            behaviorStats,
+            trackAnswerChange,
             // 計時器
             timeRemaining,
             timerProgress,
