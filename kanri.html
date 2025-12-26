@@ -256,11 +256,8 @@
 <script>
 const { createApp, ref, computed, onMounted } = Vue;
 
-// 允許的管理員 email（可改為從後端 API 驗證）
-const ALLOWED_ADMINS = [
-    'dash@smai.com.tw',
-    'admin@smai.com.tw'
-];
+// 允許的管理員網域
+const ALLOWED_DOMAINS = ['yesiang.com'];
 
 createApp({
     setup() {
@@ -300,7 +297,8 @@ createApp({
                 return;
             }
             const email = clerk.user.primaryEmailAddress?.emailAddress || '';
-            if (ALLOWED_ADMINS.includes(email)) {
+            const domain = email.split('@')[1];
+            if (ALLOWED_DOMAINS.includes(domain)) {
                 isLoggedIn.value = true;
                 userEmail.value = email;
                 userAvatar.value = clerk.user.imageUrl || '';
