@@ -863,24 +863,7 @@
                     </div>
                 </div>
 
-                <!-- 人格特質分析 -->
-                <div class="mb-6 p-4 rounded-xl" style="background: var(--bg-light);">
-                    <h3 class="font-bold mb-3 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                        </svg>
-                        人格特質分析
-                    </h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div v-for="(trait, key) in personalityScores" :key="key" class="text-center p-3 rounded-lg" style="background: var(--bg-cream);">
-                            <div class="text-2xl font-bold" :style="{ color: trait.score === trait.total ? 'var(--accent-green)' : 'var(--primary-dark)' }">
-                                {{ trait.total > 0 ? Math.round(trait.score / trait.total * 100) : 0 }}%
-                            </div>
-                            <div class="text-sm opacity-80">{{ trait.label }}</div>
-                            <div class="text-xs opacity-60">{{ trait.score }}/{{ trait.total }}</div>
-                        </div>
-                    </div>
-                </div>
+                <!-- 人格特質分析（僅供主考官檢視，不顯示給應試者） -->
 
                 <div class="alert alert-info mb-6">
                     <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -2509,17 +2492,38 @@ jobs:
         };
 
         const exportResult = () => {
+            // 人格特質分析（僅供主考官參考）
+            const personalityAnalysis = {};
+            for (const [key, trait] of Object.entries(personalityScores.value)) {
+                personalityAnalysis[key] = {
+                    label: trait.label,
+                    score: trait.score,
+                    total: trait.total,
+                    percentage: trait.total > 0 ? Math.round(trait.score / trait.total * 100) : 0
+                };
+            }
+
             const result = {
                 name: userName.value,
+                email: userEmail.value,
+                phone: userPhone.value,
                 position: selectedPosition.value?.name,
                 timestamp: new Date().toISOString(),
                 choiceScore: choiceScore.value,
                 totalChoiceQuestions: totalChoiceQuestions.value,
+                personalityAnalysis, // 人格特質分析
                 answers: currentQuestions.value.map((q, idx) => ({
                     question: q.question,
                     type: q.type,
+                    category: q.category,
                     answer: q.type === 'choice' ? q.options[answers.value[idx]] : answers.value[idx],
-                    correct: q.type === 'choice' ? answers.value[idx] === q.answer : null
+                    correct: q.type === 'choice' ? answers.value[idx] === q.answer : null,
+                    trait: q.trait || null
+                })),
+                challengeAnswers: challengeQuestions.value.map((q, idx) => ({
+                    question: q.question,
+                    category: q.category,
+                    answer: q.options ? q.options[challengeAnswers.value[idx]] : challengeAnswers.value[idx]
                 }))
             };
 
