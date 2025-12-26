@@ -752,6 +752,97 @@
             </div>
         </div>
 
+        <!-- Loading Challenge Screen -->
+        <div v-if="isGeneratingChallenge" class="card bg-base-100 shadow-xl">
+            <div class="card-body text-center py-16">
+                <div class="ai-avatar mx-auto mb-4" style="width: 64px; height: 64px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold mb-2">AI 正在為你準備進階挑戰題...</h2>
+                <p class="opacity-70">根據你的作答表現，生成個人化題目中</p>
+                <span class="loading loading-dots loading-lg mt-4" style="color: var(--primary-light);"></span>
+            </div>
+        </div>
+
+        <!-- Challenge Screen -->
+        <div v-if="currentStep === 'challenge'" class="space-y-4">
+            <!-- Progress -->
+            <div class="flex items-center gap-4 mb-6">
+                <div class="badge badge-secondary px-4 py-3">進階挑戰</div>
+                <progress class="progress progress-secondary flex-1" :value="currentChallengeIndex + 1" :max="challengeQuestions.length"></progress>
+                <span class="text-sm font-medium">{{ currentChallengeIndex + 1 }} / {{ challengeQuestions.length }}</span>
+                <!-- Timer -->
+                <div class="flex items-center gap-2">
+                    <svg class="timer-ring" width="36" height="36">
+                        <circle class="timer-bg" cx="18" cy="18" r="14"></circle>
+                        <circle class="timer-progress" :class="{ 'timer-danger': timerDanger }"
+                            cx="18" cy="18" r="14"
+                            :stroke-dasharray="88"
+                            :stroke-dashoffset="88 - (88 * timerProgress / 100)">
+                        </circle>
+                    </svg>
+                    <span class="text-sm font-mono" :class="{ 'text-red-500 font-bold': timerDanger }">
+                        {{ timeRemaining }}s
+                    </span>
+                </div>
+            </div>
+
+            <!-- Challenge Info -->
+            <div class="alert mb-4" style="background: linear-gradient(135deg, var(--primary-light), var(--primary-dark)); color: white;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span>這是 AI 根據你的表現生成的個人化題目，答案將由面試官評估</span>
+            </div>
+
+            <!-- Question Card -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <div class="flex items-center gap-2 mb-2 flex-wrap">
+                        <span class="badge badge-secondary">AI 生成</span>
+                        <span class="badge badge-neutral">{{ currentChallenge.category }}</span>
+                        <span class="badge badge-outline">{{ currentChallenge.difficulty }}</span>
+                    </div>
+
+                    <h2 class="card-title text-lg">{{ currentChallenge.question }}</h2>
+
+                    <!-- Multiple Choice -->
+                    <div v-if="currentChallenge.options" class="mt-6 space-y-3">
+                        <label v-for="(option, idx) in currentChallenge.options" :key="idx"
+                            class="flex items-center gap-3 p-3 rounded-lg option-item cursor-pointer transition-colors"
+                            :class="{ 'ring-2 ring-primary bg-primary/10': challengeAnswers[currentChallengeIndex] === idx }">
+                            <input type="radio" :value="idx" v-model="challengeAnswers[currentChallengeIndex]" class="radio radio-primary">
+                            <span>{{ option }}</span>
+                        </label>
+                    </div>
+
+                    <!-- Text Answer -->
+                    <div v-else class="mt-6">
+                        <textarea v-model="challengeAnswers[currentChallengeIndex]"
+                            class="textarea textarea-bordered w-full h-48"
+                            placeholder="請寫出你的答案和思路說明..."
+                            maxlength="5000"></textarea>
+                        <div class="text-right text-xs opacity-50 mt-1">
+                            {{ (challengeAnswers[currentChallengeIndex] || '').length }} / 5000
+                        </div>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="card-actions flex-col sm:flex-row justify-between gap-2 mt-6">
+                        <div></div>
+                        <button v-if="currentChallengeIndex < challengeQuestions.length - 1" class="btn btn-primary w-full sm:w-auto" @click="nextChallenge">
+                            下一題
+                        </button>
+                        <button v-else class="btn btn-success w-full sm:w-auto" @click="submitChallenge">
+                            完成挑戰
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Result Screen -->
         <div v-if="currentStep === 'result'" class="card bg-base-100 shadow-xl">
             <div class="card-body">
@@ -798,7 +889,38 @@
                     <span>實作題和 Code Review 題需要人工審閱，我們會在 3 個工作天內通知結果。</span>
                 </div>
 
-                <h3 class="font-bold text-lg mb-4">作答紀錄</h3>
+                <!-- 進階挑戰題（AI 生成） -->
+                <div v-if="challengeQuestions.length > 0" class="mb-6">
+                    <h3 class="font-bold text-lg mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                        進階挑戰題（AI 個人化生成）
+                    </h3>
+                    <div class="alert mb-4" style="background: linear-gradient(135deg, var(--primary-light), var(--primary-dark)); color: white;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                        </svg>
+                        <span>這些題目由 AI 根據你的作答表現動態生成，答案將由面試官在面談時深入評估</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div v-for="(q, idx) in challengeQuestions" :key="'c-'+idx" class="p-4 rounded-xl" style="background: var(--bg-light); border: 2px solid var(--primary-light);">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="badge badge-secondary">AI 生成</span>
+                                <span class="badge badge-outline">{{ q.difficulty }}</span>
+                            </div>
+                            <p class="font-medium mb-2">{{ q.question }}</p>
+                            <p class="text-sm opacity-80">
+                                <strong>你的答案：</strong>
+                                <span v-if="q.options">{{ q.options[challengeAnswers[idx]] || '未作答' }}</span>
+                                <span v-else class="whitespace-pre-wrap">{{ challengeAnswers[idx] || '未作答' }}</span>
+                            </p>
+                            <p class="text-xs mt-2 opacity-60 italic">* 此題答案將由面試官評估，不顯示參考答案</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-bold text-lg mb-4">基礎測驗紀錄</h3>
                 <div class="space-y-4 max-h-96 overflow-y-auto">
                     <div v-for="(q, idx) in currentQuestions" :key="idx" class="collapse collapse-arrow bg-base-200">
                         <input type="checkbox">
@@ -878,10 +1000,17 @@ const { createApp, ref, computed, onMounted } = Vue;
 createApp({
     setup() {
         // State
-        const currentStep = ref('welcome');
+        const currentStep = ref('welcome'); // welcome -> test -> challenge -> result
         const userName = ref('');
         const userEmail = ref('');
         const userPhone = ref('');
+
+        // 進階挑戰題（Claude 動態生成）
+        const challengeQuestions = ref([]);
+        const challengeAnswers = ref({});
+        const currentChallengeIndex = ref(0);
+        const isGeneratingChallenge = ref(false);
+        const challengeError = ref('');
         const selectedPosition = ref(null);
         const currentQuestionIndex = ref(0);
         const answers = ref({});
@@ -2201,7 +2330,74 @@ jobs:
             }
         };
 
+        // 生成進階挑戰題
+        const generateChallengeQuestions = async () => {
+            isGeneratingChallenge.value = true;
+            challengeError.value = '';
+            challengeQuestions.value = [];
+
+            try {
+                const previousQs = currentQuestions.value.map(q => q.question);
+                const stats = behaviorStats.value;
+
+                // 生成 2 題
+                for (let i = 0; i < 2; i++) {
+                    const response = await fetch('/api/generate-question', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            position: selectedPosition.value.id,
+                            behavior: {
+                                avgResponseTime: stats.avgResponseTime,
+                                correctRate: stats.correctRate / 100,
+                                changeCount: stats.totalChanges,
+                                questionCount: stats.questionCount
+                            },
+                            previousQuestions: [...previousQs, ...challengeQuestions.value.map(q => q.question)],
+                            difficulty: stats.correctRate > 70 ? '進階' : '中等'
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.question) {
+                            challengeQuestions.value.push({
+                                ...data.question,
+                                isChallenge: true
+                            });
+                        }
+                    }
+                }
+
+                // 如果成功生成至少一題，進入挑戰模式
+                if (challengeQuestions.value.length > 0) {
+                    currentChallengeIndex.value = 0;
+                    currentStep.value = 'challenge';
+                    startTimer();
+                } else {
+                    // 沒有生成成功，直接到結果
+                    await finalSubmit();
+                }
+            } catch (err) {
+                console.error('Generate challenge error:', err);
+                challengeError.value = '無法生成進階題目';
+                // 失敗也繼續到結果
+                await finalSubmit();
+            } finally {
+                isGeneratingChallenge.value = false;
+            }
+        };
+
+        // 進入挑戰題流程
         const submitTest = async () => {
+            stopTimer();
+            recordQuestionComplete();
+            // 先嘗試生成挑戰題
+            await generateChallengeQuestions();
+        };
+
+        // 最終提交
+        const finalSubmit = async () => {
             isSubmitting.value = true;
             submitError.value = '';
 
@@ -2215,6 +2411,16 @@ jobs:
                     correct: q.type === 'choice' ? answers.value[idx] === q.answer : null
                 }));
 
+                // 加入挑戰題答案
+                const challengeData = challengeQuestions.value.map((q, idx) => ({
+                    question: q.question,
+                    type: q.type || 'choice',
+                    category: '進階挑戰',
+                    answer: q.type === 'choice' ? q.options?.[challengeAnswers.value[idx]] : challengeAnswers.value[idx],
+                    correct: null, // 挑戰題不自動判斷
+                    isChallenge: true
+                }));
+
                 const response = await fetch(`${API_URL}/submit`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -2225,7 +2431,8 @@ jobs:
                         position: selectedPosition.value.name,
                         choice_score: choiceScore.value,
                         total_choice: totalChoiceQuestions.value,
-                        answers: answersData
+                        answers: [...answersData, ...challengeData],
+                        behaviorStats: behaviorStats.value
                     })
                 });
 
@@ -2237,12 +2444,28 @@ jobs:
             } catch (err) {
                 submitError.value = err.message;
                 console.error('Submit error:', err);
-                // 即使提交失敗，也讓使用者看到結果
                 currentStep.value = 'result';
             } finally {
                 isSubmitting.value = false;
             }
         };
+
+        // 挑戰題導航
+        const nextChallenge = () => {
+            if (currentChallengeIndex.value < challengeQuestions.value.length - 1) {
+                currentChallengeIndex.value++;
+                startTimer();
+            }
+        };
+
+        const submitChallenge = async () => {
+            stopTimer();
+            await finalSubmit();
+        };
+
+        const currentChallenge = computed(() => {
+            return challengeQuestions.value[currentChallengeIndex.value] || {};
+        });
 
         const resetTest = () => {
             currentStep.value = 'welcome';
@@ -2324,6 +2547,14 @@ jobs:
             timeRemaining,
             timerProgress,
             timerDanger,
+            // 挑戰題
+            challengeQuestions,
+            challengeAnswers,
+            currentChallengeIndex,
+            currentChallenge,
+            isGeneratingChallenge,
+            nextChallenge,
+            submitChallenge,
             // 原有
             currentStep,
             userName,

@@ -1,8 +1,81 @@
 // Vercel Serverless Function - 動態出題 API
 // 使用 Claude API 根據使用者行為動態生成題目
+// 包含安全防護：rate limiting、內容過濾、bot 偵測
 
 export const config = {
   runtime: 'edge'
+}
+
+// 簡易 rate limiting（使用 Map，Edge Function 每次冷啟動會重置）
+const requestCounts = new Map()
+const RATE_LIMIT = 10 // 每分鐘最多 10 次
+const RATE_WINDOW = 60000 // 1 分鐘
+
+// Bot 偵測
+function isBot(request) {
+  const ua = request.headers.get('user-agent') || ''
+  const botPatterns = [
+    /bot/i, /crawler/i, /spider/i, /scraper/i,
+    /curl/i, /wget/i, /python-requests/i,
+    /headless/i, /phantom/i, /selenium/i
+  ]
+  return botPatterns.some(pattern => pattern.test(ua))
+}
+
+// Rate limiting 檢查
+function checkRateLimit(ip) {
+  const now = Date.now()
+  const record = requestCounts.get(ip)
+
+  if (!record) {
+    requestCounts.set(ip, { count: 1, resetAt: now + RATE_WINDOW })
+    return true
+  }
+
+  if (now > record.resetAt) {
+    requestCounts.set(ip, { count: 1, resetAt: now + RATE_WINDOW })
+    return true
+  }
+
+  if (record.count >= RATE_LIMIT) {
+    return false
+  }
+
+  record.count++
+  return true
+}
+
+// 內容過濾（基本髒話和攻擊性文字）
+function containsOffensiveContent(text) {
+  if (!text) return false
+  const offensivePatterns = [
+    // 基本過濾（可以擴充）
+    /fuck|shit|damn|ass|bitch/i,
+    /幹|靠|媽的|垃圾|白癡|智障|廢物/,
+    /<script|javascript:|on\w+=/i, // XSS 嘗試
+    /union\s+select|drop\s+table|insert\s+into/i, // SQL injection
+    /\{\{.*\}\}|<%.*%>/i // Template injection
+  ]
+  return offensivePatterns.some(pattern => pattern.test(text))
+}
+
+// 清理輸入
+function sanitizeInput(obj) {
+  if (typeof obj === 'string') {
+    return obj.slice(0, 10000) // 限制長度
+      .replace(/[<>]/g, '') // 移除 HTML 標籤
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeInput)
+  }
+  if (obj && typeof obj === 'object') {
+    const cleaned = {}
+    for (const [key, value] of Object.entries(obj)) {
+      cleaned[key] = sanitizeInput(value)
+    }
+    return cleaned
+  }
+  return obj
 }
 
 export default async function handler(request) {
@@ -14,13 +87,40 @@ export default async function handler(request) {
     })
   }
 
+  // Bot 偵測
+  if (isBot(request)) {
+    return new Response(JSON.stringify({ error: 'Access denied' }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
+  // Rate limiting
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
+  if (!checkRateLimit(ip)) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
   try {
-    const body = await request.json()
+    const rawBody = await request.json()
+    const body = sanitizeInput(rawBody)
     const { position, behavior, previousQuestions, difficulty } = body
 
     // 驗證必要參數
     if (!position) {
       return new Response(JSON.stringify({ error: 'Position is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+
+    // 驗證 position 是否合法
+    const validPositions = ['vue', 'fullstack', 'angular', 'python', 'ai', 'devops', 'iot']
+    if (!validPositions.includes(position)) {
+      return new Response(JSON.stringify({ error: 'Invalid position' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       })
@@ -103,7 +203,8 @@ function analyzeBehavior(behavior) {
     return {
       pattern: 'normal',
       insight: '讓我們開始了解你吧！',
-      suggestedDifficulty: '中等'
+      suggestedDifficulty: '中等',
+      isSuspicious: false
     }
   }
 
@@ -117,9 +218,14 @@ function analyzeBehavior(behavior) {
   let pattern = 'normal'
   let insight = ''
   let suggestedDifficulty = '中等'
+  let isSuspicious = false
 
-  // 分析回應速度
-  if (avgResponseTime < 10) {
+  // 偵測可疑行為
+  if (avgResponseTime < 3 && questionCount > 3) {
+    isSuspicious = true
+    pattern = 'rushing'
+    insight = '系統偵測到異常快速作答'
+  } else if (avgResponseTime < 10) {
     pattern = 'quick'
     insight = '你的反應很快！'
   } else if (avgResponseTime > 45) {
@@ -145,7 +251,8 @@ function analyzeBehavior(behavior) {
   return {
     pattern,
     insight: insight || '繼續保持！',
-    suggestedDifficulty
+    suggestedDifficulty,
+    isSuspicious
   }
 }
 
@@ -165,7 +272,7 @@ function buildPrompt(position, behaviorAnalysis, previousQuestions, difficulty) 
   const targetDifficulty = difficulty || behaviorAnalysis.suggestedDifficulty
 
   const previousQuestionsText = previousQuestions?.length > 0
-    ? `\n\n已經問過的題目（請勿重複）：\n${previousQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
+    ? `\n\n已經問過的題目（請勿重複）：\n${previousQuestions.slice(-10).map((q, i) => `${i + 1}. ${q}`).join('\n')}`
     : ''
 
   return `你是 SMAI 技術人才測驗系統的出題 AI。請根據以下條件生成一道選擇題：
@@ -190,7 +297,8 @@ ${previousQuestionsText}
 1. 題目要實用，考驗真實工作能力
 2. 選項要有區辨度，避免明顯的誘答
 3. answer 是正確答案的索引（0-3）
-4. 使用正體中文（台灣用語）`
+4. 使用正體中文（台灣用語）
+5. 不要出太刁鑽或冷門的題目`
 }
 
 // 解析 Claude 回應
@@ -199,19 +307,29 @@ function parseQuestionFromResponse(response) {
     // 嘗試直接解析 JSON
     const jsonMatch = response.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0])
+      const parsed = JSON.parse(jsonMatch[0])
+      // 驗證必要欄位
+      if (!parsed.question || !parsed.options || parsed.answer === undefined) {
+        throw new Error('Missing required fields')
+      }
+      return parsed
     }
     throw new Error('No JSON found in response')
   } catch (error) {
     console.error('Parse error:', error)
     // 回傳預設題目
     return {
-      question: '解析錯誤，請重試',
-      options: ['選項 A', '選項 B', '選項 C', '選項 D'],
+      question: '在軟體開發中，什麼是「技術債」(Technical Debt)？',
+      options: [
+        '因為趕工而選擇快速但不完善的解決方案，未來需要重構',
+        '購買軟體授權的費用',
+        '開發團隊的薪資支出',
+        '伺服器的運維成本'
+      ],
       answer: 0,
-      explanation: '系統錯誤',
+      explanation: '技術債是指為了短期利益而採用的權宜之計，長期會增加維護成本',
       difficulty: '中等',
-      category: '系統'
+      category: '軟體工程'
     }
   }
 }
