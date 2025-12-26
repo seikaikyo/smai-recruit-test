@@ -123,7 +123,7 @@
                             :class="{ 'ring-2 ring-primary': selectedPosition?.id === pos.id }">
                             <div class="card-body p-4">
                                 <div class="flex items-start gap-3">
-                                    <input type="radio" :value="pos" v-model="selectedPosition" class="radio radio-primary mt-1">
+                                    <input type="radio" name="position" :value="pos" v-model="selectedPosition" class="radio radio-primary mt-1">
                                     <div>
                                         <h3 class="font-bold">{{ pos.name }}</h3>
                                         <p class="text-sm opacity-70">{{ pos.tech }}</p>
