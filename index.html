@@ -71,9 +71,18 @@
         }
 
         body {
-            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light) 100%);
+            background: linear-gradient(135deg, #FDF8F3 0%, #F5EDE4 100%);
             color: var(--primary-text);
             min-height: 100vh;
+        }
+        html[data-theme="matcha"] body {
+            background: linear-gradient(135deg, #F0F5F0 0%, #E0EBE0 100%) !important;
+        }
+        html[data-theme="sakura"] body {
+            background: linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%) !important;
+        }
+        html[data-theme="fuji"] body {
+            background: linear-gradient(135deg, #F8F5FC 0%, #EDE8F4 100%) !important;
         }
 
         /* Header 漸層 */
