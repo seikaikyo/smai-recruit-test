@@ -907,10 +907,10 @@
                 <div class="space-y-4 max-h-96 overflow-y-auto">
                     <div v-for="(q, idx) in currentQuestions" :key="idx" class="collapse collapse-arrow bg-base-200">
                         <input type="checkbox">
-                        <div class="collapse-title font-medium flex items-center gap-2">
-                            <span class="badge" :class="getTypeBadgeClass(q.type, q.category)">{{ q.category === '人格特質' ? '情境題' : getTypeLabel(q.type) }}</span>
-                            {{ q.question.substring(0, 50) }}{{ q.question.length > 50 ? '...' : '' }}
-                            <span v-if="q.type === 'choice'" class="badge ml-auto" :class="isCorrect(idx) ? 'badge-success' : 'badge-error'">
+                        <div class="collapse-title font-medium flex flex-wrap items-center gap-2">
+                            <span class="badge shrink-0" :class="getTypeBadgeClass(q.type, q.category)">{{ q.category === '人格特質' ? '情境題' : getTypeLabel(q.type) }}</span>
+                            <span class="flex-1 min-w-0 truncate">{{ q.question.substring(0, 40) }}{{ q.question.length > 40 ? '...' : '' }}</span>
+                            <span v-if="q.type === 'choice'" class="badge shrink-0" :class="isCorrect(idx) ? 'badge-success' : 'badge-error'">
                                 {{ isCorrect(idx) ? '正確' : '錯誤' }}
                             </span>
                         </div>
