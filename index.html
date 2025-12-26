@@ -78,30 +78,82 @@
             --accent-yellow: #FFE8C0;
         }
 
-        /* 深色模式 - 夜空靜謐 */
-        html[data-theme="dark"], html[data-theme="dark"] body {
-            --primary-light: #6B8CAE;
-            --primary-dark: #3D5A80;
-            --primary-text: #E0E8F0;
-            --bg-cream: #1A1A2E;
-            --bg-light: #16213E;
-            --bg-medium: #0F3460;
-            --accent-pink: #E94560;
-            --accent-green: #4ECCA3;
-            --accent-blue: #6B8CAE;
-            --accent-yellow: #F0A500;
+        /* 深色模式 - 各主題的夜間版本 */
+        html.dark[data-theme="caramel"], html.dark:not([data-theme]) {
+            --primary-light: #9B8A6A;
+            --primary-dark: #6B5A45;
+            --primary-text: #E8DED0;
+            --bg-cream: #1A1815;
+            --bg-light: #252218;
+            --bg-medium: #3A3428;
+            --accent-pink: #C4A0A0;
+            --accent-green: #8CA088;
+            --accent-blue: #88A0B0;
+            --accent-yellow: #C0A888;
         }
-        html[data-theme="dark"] .card {
-            background: #1A1A2E !important;
-            color: #E0E8F0 !important;
+        html.dark[data-theme="matcha"] {
+            --primary-light: #7A9A7A;
+            --primary-dark: #506850;
+            --primary-text: #D8E8D8;
+            --bg-cream: #141A14;
+            --bg-light: #1E281E;
+            --bg-medium: #2A3A2A;
+            --accent-pink: #C0A8A8;
+            --accent-green: #88A888;
+            --accent-blue: #90B0B8;
+            --accent-yellow: #B8C8A0;
         }
-        html[data-theme="dark"] .input,
-        html[data-theme="dark"] .textarea {
-            background: #16213E !important;
-            color: #E0E8F0 !important;
+        html.dark[data-theme="sakura"] {
+            --primary-light: #B07878;
+            --primary-dark: #905050;
+            --primary-text: #F0E0E0;
+            --bg-cream: #1A1414;
+            --bg-light: #281E1E;
+            --bg-medium: #3A2828;
+            --accent-pink: #C09090;
+            --accent-green: #98B098;
+            --accent-blue: #A0A0C0;
+            --accent-yellow: #C8B8A8;
         }
-        html[data-theme="dark"] .badge {
-            color: #E0E8F0 !important;
+        html.dark[data-theme="fuji"] {
+            --primary-light: #887898;
+            --primary-dark: #604870;
+            --primary-text: #E8E0F0;
+            --bg-cream: #161418;
+            --bg-light: #201E28;
+            --bg-medium: #302838;
+            --accent-pink: #B8A0B0;
+            --accent-green: #A0B0A0;
+            --accent-blue: #A0A8C0;
+            --accent-yellow: #C0B8D0;
+        }
+        html.dark[data-theme="orange"] {
+            --primary-light: #B88048;
+            --primary-dark: #986028;
+            --primary-text: #F0E8E0;
+            --bg-cream: #1A1610;
+            --bg-light: #282018;
+            --bg-medium: #3A3020;
+            --accent-pink: #C8A898;
+            --accent-green: #A8B898;
+            --accent-blue: #A8B8C8;
+            --accent-yellow: #C8B898;
+        }
+        html.dark .card {
+            background: var(--bg-cream) !important;
+            color: var(--primary-text) !important;
+        }
+        html.dark .input,
+        html.dark .textarea {
+            background: var(--bg-light) !important;
+            color: var(--primary-text) !important;
+            border-color: var(--bg-medium) !important;
+        }
+        html.dark .badge {
+            color: var(--primary-text) !important;
+        }
+        html.dark body {
+            background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-light) 100%) !important;
         }
 
         /* 全域過渡動畫 */
