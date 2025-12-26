@@ -52,13 +52,19 @@
                         <img v-if="userAvatar" :src="userAvatar" class="w-6 h-6 rounded-full">
                         <span>{{ userEmail }}</span>
                     </div>
-                    <button class="btn btn-ghost btn-sm" @click="fetchResults">重新整理</button>
+                    <button class="btn btn-ghost btn-sm" @click="currentTab === 'results' ? fetchResults() : fetchAuditLogs()">重新整理</button>
                     <button class="btn btn-ghost btn-sm" @click="logout">登出</button>
                 </div>
             </div>
 
-            <!-- 篩選區 -->
-            <div class="flex flex-wrap gap-4 mt-4">
+            <!-- 頁籤 -->
+            <div class="tabs tabs-boxed mt-4 w-fit">
+                <a class="tab" :class="{ 'tab-active': currentTab === 'results' }" @click="currentTab = 'results'">測驗結果</a>
+                <a class="tab" :class="{ 'tab-active': currentTab === 'audit' }" @click="currentTab = 'audit'; fetchAuditLogs()">稽核日誌</a>
+            </div>
+
+            <!-- 篩選區 (只在測驗結果頁籤顯示) -->
+            <div v-if="currentTab === 'results'" class="flex flex-wrap gap-4 mt-4">
                 <!-- 狀態篩選 -->
                 <div>
                     <div class="text-xs opacity-60 mb-1">狀態</div>
@@ -95,7 +101,7 @@
         </div>
 
         <!-- Results Table -->
-        <div v-else class="card bg-base-100 shadow-xl">
+        <div v-else-if="currentTab === 'results'" class="card bg-base-100 shadow-xl">
             <div class="card-body">
                 <div class="overflow-x-auto">
                     <table class="table">
@@ -141,6 +147,43 @@
                 </div>
                 <div v-if="filteredResults.length === 0" class="text-center py-8 opacity-50">
                     目前沒有測驗結果
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Logs Table -->
+        <div v-else-if="currentTab === 'audit'" class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>時間</th>
+                                <th>操作者</th>
+                                <th>IP</th>
+                                <th>動作</th>
+                                <th>描述</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="log in auditLogs" :key="log.id" class="hover">
+                                <td class="text-xs whitespace-nowrap">{{ log.created_at }}</td>
+                                <td class="text-sm">{{ log.user_email }}</td>
+                                <td class="text-xs font-mono">{{ log.ip_address }}</td>
+                                <td>
+                                    <span class="badge badge-sm" :class="{
+                                        'badge-info': log.action === 'view',
+                                        'badge-warning': log.action === 'update',
+                                        'badge-error': log.action === 'delete'
+                                    }">{{ log.action }}</span>
+                                </td>
+                                <td class="text-sm">{{ log.description }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div v-if="auditLogs.length === 0" class="text-center py-8 opacity-50">
+                    目前沒有稽核日誌
                 </div>
             </div>
         </div>
@@ -269,7 +312,9 @@ createApp({
         const userEmail = ref('');
         const userAvatar = ref('');
         const loading = ref(false);
+        const currentTab = ref('results');
         const results = ref([]);
+        const auditLogs = ref([]);
         const filterStatus = ref('');
         const filterPosition = ref('');
         const selectedResult = ref(null);
@@ -348,6 +393,22 @@ createApp({
                 }
             } catch (err) {
                 console.error('Failed to fetch results:', err);
+            } finally {
+                loading.value = false;
+            }
+        };
+
+        const fetchAuditLogs = async () => {
+            loading.value = true;
+            try {
+                const headers = await getAuthHeaders();
+                const res = await fetch(`${API_URL}/audit-logs`, { headers });
+                const data = await res.json();
+                if (data.success) {
+                    auditLogs.value = data.data;
+                }
+            } catch (err) {
+                console.error('Failed to fetch audit logs:', err);
             } finally {
                 loading.value = false;
             }
@@ -473,7 +534,9 @@ createApp({
             userEmail,
             userAvatar,
             loading,
+            currentTab,
             results,
+            auditLogs,
             filterStatus,
             filterPosition,
             positions,
@@ -484,6 +547,7 @@ createApp({
             login,
             logout,
             fetchResults,
+            fetchAuditLogs,
             viewDetail,
             updateStatus,
             getStatusClass,
