@@ -405,7 +405,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div class="form-control">
                         <label class="label"><span class="label-text font-medium">姓名 *</span></label>
-                        <input type="text" v-model="userName" placeholder="王小明" class="input input-bordered">
+                        <input type="text" v-model="userName" :placeholder="randomStar" class="input input-bordered">
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text font-medium">Email</span></label>
@@ -595,6 +595,14 @@ createApp({
         const submitError = ref('');
 
         // 主題系統
+        // 主題配置（含背景色）
+        const themeConfigs = {
+            caramel: { name: '焦糖奶茶', bg: 'linear-gradient(135deg, #FDF8F3 0%, #F5EDE4 100%)' },
+            matcha: { name: '抹茶清新', bg: 'linear-gradient(135deg, #F0F5F0 0%, #E0EBE0 100%)' },
+            sakura: { name: '櫻花柔粉', bg: 'linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%)' },
+            fuji: { name: '藤紫優雅', bg: 'linear-gradient(135deg, #F8F5FC 0%, #EDE8F4 100%)' }
+        };
+
         const themes = ref([
             { id: 'caramel', name: '焦糖奶茶' },
             { id: 'matcha', name: '抹茶清新' },
@@ -603,11 +611,18 @@ createApp({
         ]);
         const currentTheme = ref(localStorage.getItem('smai-theme') || 'caramel');
 
+        // 套用主題背景
+        const applyThemeBackground = (themeId) => {
+            document.body.style.background = themeConfigs[themeId].bg;
+        };
+
         // 初始化主題
         const initTheme = () => {
-            if (currentTheme.value !== 'caramel') {
-                document.documentElement.setAttribute('data-theme', currentTheme.value);
+            const theme = currentTheme.value;
+            if (theme !== 'caramel') {
+                document.documentElement.setAttribute('data-theme', theme);
             }
+            applyThemeBackground(theme);
         };
 
         // 設定主題
@@ -619,10 +634,20 @@ createApp({
             } else {
                 document.documentElement.setAttribute('data-theme', themeId);
             }
+            applyThemeBackground(themeId);
         };
 
         // 頁面載入時初始化主題
         initTheme();
+
+        // 日本明星名字（隨機 placeholder）
+        const jpStars = [
+            '新垣結衣', '石原聰美', '綾瀨遙', '長澤雅美', '北川景子',
+            '佐藤健', '菅田將暉', '山崎賢人', '吉澤亮', '橫濱流星',
+            '廣瀨鈴', '有村架純', '川口春奈', '今田美櫻', '濱邊美波',
+            '木村拓哉', '福山雅治', '玉木宏', '藤原龍也', '小栗旬'
+        ];
+        const randomStar = ref(jpStars[Math.floor(Math.random() * jpStars.length)]);
 
         // API URL
         const API_URL = 'https://smai-mcp-center.onrender.com/api/recruit';
@@ -1212,6 +1237,8 @@ CMD ["python", "app.py"]`
             themes,
             currentTheme,
             setTheme,
+            // 隨機名字
+            randomStar,
             // 原有
             currentStep,
             userName,
