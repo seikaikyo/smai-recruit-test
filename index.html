@@ -78,6 +78,32 @@
             --accent-yellow: #FFE8C0;
         }
 
+        /* 深色模式 - 夜空靜謐 */
+        html[data-theme="dark"], html[data-theme="dark"] body {
+            --primary-light: #6B8CAE;
+            --primary-dark: #3D5A80;
+            --primary-text: #E0E8F0;
+            --bg-cream: #1A1A2E;
+            --bg-light: #16213E;
+            --bg-medium: #0F3460;
+            --accent-pink: #E94560;
+            --accent-green: #4ECCA3;
+            --accent-blue: #6B8CAE;
+            --accent-yellow: #F0A500;
+        }
+        html[data-theme="dark"] .card {
+            background: #1A1A2E !important;
+            color: #E0E8F0 !important;
+        }
+        html[data-theme="dark"] .input,
+        html[data-theme="dark"] .textarea {
+            background: #16213E !important;
+            color: #E0E8F0 !important;
+        }
+        html[data-theme="dark"] .badge {
+            color: #E0E8F0 !important;
+        }
+
         /* 全域過渡動畫 */
         * {
             transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease, box-shadow 0.3s ease;
@@ -147,6 +173,109 @@
         .theme-sakura { background: linear-gradient(135deg, #E8B4B4, #C48888); }
         .theme-fuji { background: linear-gradient(135deg, #B4A8C4, #887898); }
         .theme-orange { background: linear-gradient(135deg, #E8A060, #C87830); }
+        .theme-dark { background: linear-gradient(135deg, #3D5A80, #1A1A2E); }
+
+        /* 打字機動畫 */
+        .typewriter {
+            overflow: hidden;
+            border-right: 3px solid var(--primary-light);
+            white-space: nowrap;
+            animation: typing 2s steps(20, end), blink-caret 0.75s step-end infinite;
+        }
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--primary-light) }
+        }
+
+        /* 倒數計時器 */
+        .timer-ring {
+            transform: rotate(-90deg);
+        }
+        .timer-ring circle {
+            fill: none;
+            stroke-width: 4;
+            stroke-linecap: round;
+        }
+        .timer-bg { stroke: var(--bg-medium); }
+        .timer-progress {
+            stroke: var(--primary-light);
+            transition: stroke-dashoffset 1s linear;
+        }
+        .timer-danger { stroke: #E94560 !important; }
+
+        /* 粒子背景 */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-light);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 15s infinite ease-in-out;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Confetti */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* 快捷鍵提示 */
+        .shortcut-hint {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            z-index: 100;
+            opacity: 0.8;
+        }
+        .shortcut-hint kbd {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin: 0 2px;
+        }
 
         /* 卡片樣式 */
         .card {
@@ -464,10 +593,24 @@
 
         <!-- Test Screen -->
         <div v-if="currentStep === 'test'" class="space-y-4">
-            <!-- Progress -->
+            <!-- Progress + Timer -->
             <div class="flex items-center gap-4 mb-6">
                 <progress class="progress progress-primary flex-1" :value="currentQuestionIndex + 1" :max="currentQuestions.length"></progress>
                 <span class="text-sm font-medium">{{ currentQuestionIndex + 1 }} / {{ currentQuestions.length }}</span>
+                <!-- 倒數計時器 -->
+                <div class="flex items-center gap-2">
+                    <svg class="timer-ring" width="36" height="36">
+                        <circle class="timer-bg" cx="18" cy="18" r="14"></circle>
+                        <circle class="timer-progress" :class="{ 'timer-danger': timerDanger }"
+                            cx="18" cy="18" r="14"
+                            :stroke-dasharray="88"
+                            :stroke-dashoffset="88 - (88 * timerProgress / 100)">
+                        </circle>
+                    </svg>
+                    <span class="text-sm font-mono" :class="{ 'text-red-500 font-bold': timerDanger }">
+                        {{ timeRemaining }}s
+                    </span>
+                </div>
             </div>
 
             <!-- Question Card -->
@@ -584,6 +727,13 @@
         </div>
     </div>
 
+    <!-- 快捷鍵提示 -->
+    <div v-if="currentStep === 'test'" class="shortcut-hint">
+        <div><kbd>1</kbd>-<kbd>4</kbd> 選答案</div>
+        <div><kbd>←</kbd><kbd>→</kbd> 換題</div>
+        <div><kbd>Enter</kbd> 下一題</div>
+    </div>
+
     <!-- Footer -->
     <footer class="footer footer-center p-4 bg-base-300 text-base-content mt-8">
         <div>
@@ -601,13 +751,16 @@
         matcha: 'linear-gradient(135deg, #F0F5F0 0%, #E0EBE0 100%)',
         sakura: 'linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%)',
         fuji: 'linear-gradient(135deg, #F8F5FC 0%, #EDE8F4 100%)',
-        orange: 'linear-gradient(135deg, #FFF8F0 0%, #FFE8D8 100%)'
+        orange: 'linear-gradient(135deg, #FFF8F0 0%, #FFE8D8 100%)',
+        dark: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 100%)'
     };
-    const theme = localStorage.getItem('smai-theme') || 'caramel';
+    const theme = localStorage.getItem('smai-theme') || 'orange';
     document.body.style.background = bgMap[theme];
     document.body.style.minHeight = '100vh';
-    if (theme !== 'caramel') {
+    if (theme !== 'orange') {
         document.documentElement.setAttribute('data-theme', theme);
+    } else {
+        document.documentElement.setAttribute('data-theme', 'orange');
     }
 })();
 
@@ -633,17 +786,19 @@ createApp({
             matcha: { name: '抹茶清新', bg: 'linear-gradient(135deg, #F0F5F0 0%, #E0EBE0 100%)' },
             sakura: { name: '櫻花柔粉', bg: 'linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%)' },
             fuji: { name: '藤紫優雅', bg: 'linear-gradient(135deg, #F8F5FC 0%, #EDE8F4 100%)' },
-            orange: { name: '橘光日和', bg: 'linear-gradient(135deg, #FFF8F0 0%, #FFE8D8 100%)' }
+            orange: { name: '橘光日和', bg: 'linear-gradient(135deg, #FFF8F0 0%, #FFE8D8 100%)' },
+            dark: { name: '夜空靜謐', bg: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 100%)' }
         };
 
         const themes = ref([
+            { id: 'orange', name: '橘光日和' },
             { id: 'caramel', name: '焦糖奶茶' },
             { id: 'matcha', name: '抹茶清新' },
             { id: 'sakura', name: '櫻花柔粉' },
             { id: 'fuji', name: '藤紫優雅' },
-            { id: 'orange', name: '橘光日和' }
+            { id: 'dark', name: '夜空靜謐' }
         ]);
-        const currentTheme = ref(localStorage.getItem('smai-theme') || 'caramel');
+        const currentTheme = ref(localStorage.getItem('smai-theme') || 'orange');
 
         // 套用主題背景
         const applyThemeBackground = (themeId) => {
@@ -682,6 +837,73 @@ createApp({
             '木村拓哉', '福山雅治', '玉木宏', '藤原龍也', '小栗旬'
         ];
         const randomStar = ref(jpStars[Math.floor(Math.random() * jpStars.length)]);
+
+        // 倒數計時系統
+        const timeLimit = 60; // 每題 60 秒
+        const timeRemaining = ref(timeLimit);
+        const timerInterval = ref(null);
+        const timerProgress = computed(() => {
+            return (timeRemaining.value / timeLimit) * 100;
+        });
+        const timerDanger = computed(() => timeRemaining.value <= 10);
+
+        const startTimer = () => {
+            stopTimer();
+            timeRemaining.value = timeLimit;
+            timerInterval.value = setInterval(() => {
+                if (timeRemaining.value > 0) {
+                    timeRemaining.value--;
+                } else {
+                    // 時間到自動跳下一題
+                    nextQuestion();
+                }
+            }, 1000);
+        };
+
+        const stopTimer = () => {
+            if (timerInterval.value) {
+                clearInterval(timerInterval.value);
+                timerInterval.value = null;
+            }
+        };
+
+        // 鍵盤快捷鍵
+        const setupKeyboardShortcuts = () => {
+            document.addEventListener('keydown', (e) => {
+                if (currentStep.value !== 'test') return;
+
+                const q = currentQuestion.value;
+                if (q.type === 'choice') {
+                    // 1-4 選擇答案
+                    if (e.key >= '1' && e.key <= '4') {
+                        const idx = parseInt(e.key) - 1;
+                        if (q.options && idx < q.options.length) {
+                            answers.value[currentQuestionIndex.value] = idx;
+                        }
+                    }
+                }
+
+                // ← → 切換題目
+                if (e.key === 'ArrowRight' || e.key === 'Enter') {
+                    e.preventDefault();
+                    nextQuestion();
+                }
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    prevQuestion();
+                }
+            });
+        };
+
+        // 題目隨機排序
+        const shuffleArray = (array) => {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        };
 
         // API URL
         const API_URL = 'https://smai-mcp-center.onrender.com/api/recruit';
@@ -1216,17 +1438,21 @@ CMD ["python", "app.py"]`
             currentStep.value = 'test';
             currentQuestionIndex.value = 0;
             answers.value = {};
+            startTimer();
+            setupKeyboardShortcuts();
         };
 
         const nextQuestion = () => {
             if (currentQuestionIndex.value < currentQuestions.value.length - 1) {
                 currentQuestionIndex.value++;
+                startTimer(); // 重置計時器
             }
         };
 
         const prevQuestion = () => {
             if (currentQuestionIndex.value > 0) {
                 currentQuestionIndex.value--;
+                startTimer(); // 重置計時器
             }
         };
 
@@ -1343,6 +1569,10 @@ CMD ["python", "app.py"]`
             setTheme,
             // 隨機名字
             randomStar,
+            // 計時器
+            timeRemaining,
+            timerProgress,
+            timerDanger,
             // 原有
             currentStep,
             userName,
