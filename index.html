@@ -625,8 +625,10 @@
                     <div>
                         <h3 class="font-bold">測驗結構</h3>
                         <ul class="text-sm mt-2 list-disc list-inside">
-                            <li><strong>Part 1：基礎必備</strong> - Git + CI/CD + AI 協作能力（所有職位必考）</li>
+                            <li><strong>Part 1：基礎必備</strong> - Git + CI/CD + AI 協作（所有職位必考）</li>
                             <li><strong>Part 2：職位專業</strong> - 依據您選擇的職位出題</li>
+                            <li><strong>Part 3：情境題</strong> - 了解你的工作風格與價值觀</li>
+                            <li><strong>Bonus：進階挑戰</strong> - AI 根據你的表現動態出題</li>
                         </ul>
                     </div>
                 </div>
@@ -655,12 +657,23 @@
                             <div class="card-body p-4">
                                 <div class="flex items-start gap-3">
                                     <input type="radio" name="position" :value="pos" v-model="selectedPosition" class="radio radio-primary mt-1">
-                                    <div>
-                                        <h3 class="font-bold">{{ pos.name }}</h3>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="font-bold">{{ pos.name }}</h3>
+                                            <button type="button" class="btn btn-ghost btn-xs" @click.prevent="showJd = showJd === pos.id ? null : pos.id" title="查看職位說明">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                                                </svg>
+                                            </button>
+                                        </div>
                                         <p class="text-sm opacity-70">{{ pos.tech }}</p>
                                         <div class="flex flex-wrap gap-1 mt-2">
                                             <span v-for="project in pos.projects.slice(0, 3)" class="badge badge-sm badge-outline">{{ project }}</span>
                                             <span v-if="pos.projects.length > 3" class="badge badge-sm badge-ghost">+{{ pos.projects.length - 3 }}</span>
+                                        </div>
+                                        <!-- JD 展開區 -->
+                                        <div v-if="showJd === pos.id" class="mt-3 p-3 rounded-lg text-xs whitespace-pre-line" style="background: var(--bg-light);">
+                                            {{ pos.jd }}
                                         </div>
                                     </div>
                                 </div>
@@ -934,7 +947,6 @@
                 </div>
 
                 <div class="card-actions justify-end mt-6">
-                    <button class="btn btn-ghost" @click="exportResult">匯出結果</button>
                     <button class="btn btn-primary" @click="resetTest">重新測驗</button>
                 </div>
             </div>
@@ -995,6 +1007,7 @@ createApp({
         const isGeneratingChallenge = ref(false);
         const challengeError = ref('');
         const selectedPosition = ref(null);
+        const showJd = ref(null); // 目前展開的 JD
         const currentQuestionIndex = ref(0);
         const answers = ref({});
         const isSubmitting = ref(false);
@@ -1282,43 +1295,148 @@ createApp({
                 id: 'vue',
                 name: 'Vue 前端工程師',
                 tech: 'Vue 3, Tailwind CSS, DaisyUI',
-                projects: ['GHG', 'MIDS', 'SSO', 'VAC', 'SMAI_8D', 'smai-process-vision', 'smai-ui']
+                projects: ['GHG', 'MIDS', 'SSO', 'VAC', 'SMAI_8D', 'smai-process-vision', 'smai-ui'],
+                jd: `【工作內容】
+- 使用 Vue 3 Composition API 開發企業級應用
+- 與 UI/UX 設計師協作，實現響應式介面
+- 串接 RESTful API，處理前後端資料交換
+- 維護現有專案，優化效能與使用者體驗
+
+【必備條件】
+- 熟悉 Vue 3、Tailwind CSS
+- 了解 Git 版本控制
+- 具備基本的 API 串接經驗
+
+【加分條件】
+- 有 DaisyUI、Shoelace 等 UI 框架經驗
+- 了解 TypeScript
+- 有 AI 輔助開發經驗`
             },
             {
                 id: 'fullstack',
                 name: '全端工程師 (Vite)',
                 tech: 'Vite, Shoelace, Prisma, PostgreSQL',
-                projects: ['MSW', 'EAP', 'RMS', 'BPM', 'RFID', 'MCS']
+                projects: ['MSW', 'EAP', 'RMS', 'BPM', 'RFID', 'MCS'],
+                jd: `【工作內容】
+- 負責前後端功能開發與整合
+- 設計資料庫 Schema，使用 Prisma ORM
+- 開發 RESTful API 並撰寫文件
+- 參與系統架構設計與技術選型
+
+【必備條件】
+- 熟悉 JavaScript/TypeScript
+- 了解 SQL 資料庫操作
+- 具備前後端整合經驗
+
+【加分條件】
+- 有 Prisma、PostgreSQL 經驗
+- 了解 Docker 容器化
+- 有 CI/CD 經驗`
             },
             {
                 id: 'angular',
                 name: 'Angular 工程師',
                 tech: 'Angular 21, PrimeNG, TypeScript',
-                projects: ['MES']
+                projects: ['MES'],
+                jd: `【工作內容】
+- 開發 MES 製造執行系統前端
+- 使用 Angular 21 + PrimeNG 建構企業應用
+- 與後端團隊協作，整合 API
+- 參與 Code Review，維護程式碼品質
+
+【必備條件】
+- 熟悉 Angular 框架（版本 15+）
+- 精通 TypeScript
+- 了解 RxJS 響應式程式設計
+
+【加分條件】
+- 有 PrimeNG 經驗
+- 了解製造業 MES 系統
+- 有 Signals 經驗`
             },
             {
                 id: 'python',
                 name: 'Python 後端工程師',
                 tech: 'FastAPI, SQLModel, PostgreSQL',
-                projects: ['smai-mcp-center', 'API_Center']
+                projects: ['smai-mcp-center', 'API_Center'],
+                jd: `【工作內容】
+- 使用 FastAPI 開發高效能 API
+- 設計資料庫模型，優化查詢效能
+- 實作驗證授權機制
+- 撰寫單元測試與 API 文件
+
+【必備條件】
+- 熟悉 Python 3.10+
+- 了解 RESTful API 設計原則
+- 具備 SQL 資料庫經驗
+
+【加分條件】
+- 有 FastAPI、SQLModel 經驗
+- 了解 OAuth2、JWT
+- 有 Docker 部署經驗`
             },
             {
                 id: 'ai',
                 name: 'AI/ML 工程師',
                 tech: 'YOLO11, OpenCV, PyTorch',
-                projects: ['AOI-8D', 'smai-process-vision', 'VisionAI']
+                projects: ['AOI-8D', 'smai-process-vision', 'VisionAI'],
+                jd: `【工作內容】
+- 開發電腦視覺 AI 應用（AOI 瑕疵檢測）
+- 訓練與優化 YOLO 物件偵測模型
+- 處理影像資料集，進行資料增強
+- 部署模型至邊緣裝置
+
+【必備條件】
+- 熟悉 Python、PyTorch/TensorFlow
+- 了解電腦視覺基礎概念
+- 具備模型訓練經驗
+
+【加分條件】
+- 有 YOLO 系列經驗
+- 了解 OpenCV 影像處理
+- 有邊緣運算部署經驗`
             },
             {
                 id: 'devops',
                 name: 'DevOps 工程師',
                 tech: 'Docker, Shell, Python CLI',
-                projects: ['dash-devtools', 'git-security-hooks', 'SSL']
+                projects: ['dash-devtools', 'git-security-hooks', 'SSL'],
+                jd: `【工作內容】
+- 建置與維護 CI/CD Pipeline
+- 開發自動化部署工具
+- 管理容器化環境
+- 監控系統效能與安全性
+
+【必備條件】
+- 熟悉 Linux 系統管理
+- 了解 Docker 容器技術
+- 具備 Shell Script 撰寫能力
+
+【加分條件】
+- 有 GitHub Actions 經驗
+- 了解 Kubernetes
+- 有 ISO 27001 相關經驗`
             },
             {
                 id: 'iot',
                 name: 'IoT 工程師',
                 tech: 'PLC/HMI, Modbus TCP, MQTT, Node-RED',
-                projects: ['WISE-IoT', 'ECU-4784', 'EdgeLink', 'OPC-UA']
+                projects: ['WISE-IoT', 'ECU-4784', 'EdgeLink', 'OPC-UA'],
+                jd: `【工作內容】
+- 整合工業設備通訊（PLC、感測器）
+- 開發 SCADA/HMI 人機介面
+- 建置 IoT 資料採集系統
+- 與 MES 系統整合
+
+【必備條件】
+- 了解工業通訊協定（Modbus、MQTT）
+- 具備 PLC 程式設計經驗
+- 熟悉電控迴路基礎
+
+【加分條件】
+- 有研華 WISE-IoT 平台經驗
+- 了解 OPC-UA
+- 有 Node-RED 經驗`
             }
         ]);
 
@@ -2385,48 +2503,64 @@ jobs:
             submitError.value = '';
 
             try {
+                // 人格特質分析
+                const personalityAnalysis = {};
+                for (const [key, trait] of Object.entries(personalityScores.value)) {
+                    personalityAnalysis[key] = {
+                        label: trait.label,
+                        score: trait.score,
+                        total: trait.total,
+                        percentage: trait.total > 0 ? Math.round(trait.score / trait.total * 100) : 0
+                    };
+                }
+
                 // 組裝答案資料
                 const answersData = currentQuestions.value.map((q, idx) => ({
                     question: q.question,
                     type: q.type,
                     category: q.category || selectedPosition.value.name,
                     answer: q.type === 'choice' ? q.options[answers.value[idx]] : answers.value[idx],
-                    correct: q.type === 'choice' ? answers.value[idx] === q.answer : null
+                    correct: q.type === 'choice' ? answers.value[idx] === q.answer : null,
+                    trait: q.trait || null
                 }));
 
-                // 加入挑戰題答案
+                // 挑戰題答案
                 const challengeData = challengeQuestions.value.map((q, idx) => ({
                     question: q.question,
-                    type: q.type || 'choice',
-                    category: '進階挑戰',
-                    answer: q.type === 'choice' ? q.options?.[challengeAnswers.value[idx]] : challengeAnswers.value[idx],
-                    correct: null, // 挑戰題不自動判斷
-                    isChallenge: true
+                    category: q.category || '進階挑戰',
+                    answer: q.options ? q.options[challengeAnswers.value[idx]] : challengeAnswers.value[idx]
                 }));
 
+                // 提交到後端 (使用 snake_case)
                 const response = await fetch(`${API_URL}/submit`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         name: userName.value,
-                        email: userEmail.value || null,
+                        email: userEmail.value || '',
                         phone: userPhone.value || null,
                         position: selectedPosition.value.name,
                         choice_score: choiceScore.value,
                         total_choice: totalChoiceQuestions.value,
-                        answers: [...answersData, ...challengeData],
-                        behaviorStats: behaviorStats.value
+                        personality_analysis: personalityAnalysis,
+                        avg_response_time: behaviorStats.value.avgResponseTime,
+                        answer_change_count: behaviorData.value.answerChanges.reduce((sum, c) => sum + c, 0),
+                        behavior_pattern: behaviorStats.value.pattern,
+                        answers: answersData,
+                        challenge_answers: challengeData
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error('提交失敗，請稍後再試');
+                    const err = await response.json().catch(() => ({}));
+                    console.warn('提交警告:', err);
+                    // 即使提交失敗也顯示結果（避免考生困惑）
                 }
 
                 currentStep.value = 'result';
             } catch (err) {
-                submitError.value = err.message;
                 console.error('Submit error:', err);
+                // 即使出錯也顯示結果頁面
                 currentStep.value = 'result';
             } finally {
                 isSubmitting.value = false;
@@ -2565,6 +2699,7 @@ jobs:
             userEmail,
             userPhone,
             selectedPosition,
+            showJd,
             positions,
             currentQuestionIndex,
             currentQuestions,
@@ -2584,7 +2719,6 @@ jobs:
             getTypeBadgeClass,
             getTypeLabel,
             formatCode,
-            exportResult
         };
     }
 }).mount('#app');
