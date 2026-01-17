@@ -7,13 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.22/dist/full.min.css" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script
-      async
-      crossorigin="anonymous"
-      data-clerk-publishable-key="pk_test_Y2xvc2UtZmxvdW5kZXItNzEuY2xlcmsuYWNjb3VudHMuZGV2JA"
-      src="https://close-flounder-71.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
-      type="text/javascript"
-    ></script>
     <style>
         [v-cloak] { display: none; }
         body { background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%); min-height: 100vh; }
@@ -23,20 +16,23 @@
 </head>
 <body>
 <div id="app" v-cloak class="min-h-screen">
-    <!-- Loading Clerk -->
-    <div v-if="clerkLoading" class="flex items-center justify-center min-h-screen">
-        <span class="loading loading-spinner loading-lg"></span>
-    </div>
-
     <!-- Login -->
-    <div v-else-if="!isLoggedIn" class="flex items-center justify-center min-h-screen">
+    <div v-if="!isLoggedIn" class="flex items-center justify-center min-h-screen">
         <div class="card bg-base-100 shadow-xl w-96">
-            <div class="card-body text-center">
+            <div class="card-body">
                 <h2 class="card-title justify-center mb-4">SMAI 測驗管理後台</h2>
-                <p class="text-sm opacity-70 mb-4">請使用公司帳號登入</p>
+                <p class="text-sm opacity-70 mb-4 text-center">請使用 SSO PIN 登入</p>
                 <div v-if="loginError" class="alert alert-error text-sm mb-4">{{ loginError }}</div>
-                <button class="btn btn-primary" @click="login">
-                    登入
+                <div class="form-control">
+                    <label class="label"><span class="label-text">員工編號</span></label>
+                    <input v-model="employeeId" type="text" class="input input-bordered" placeholder="請輸入員工編號" @keyup.enter="login">
+                </div>
+                <div class="form-control mt-2">
+                    <label class="label"><span class="label-text">PIN 碼</span></label>
+                    <input v-model="pin" type="password" class="input input-bordered" placeholder="請輸入 PIN 碼" maxlength="6" @keyup.enter="login">
+                </div>
+                <button class="btn btn-primary mt-4" :class="{ 'loading': loginLoading }" :disabled="loginLoading" @click="login">
+                    {{ loginLoading ? '登入中...' : '登入' }}
                 </button>
             </div>
         </div>
@@ -49,8 +45,7 @@
                 <span class="text-xl font-bold">SMAI 測驗管理後台</span>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-2 text-sm opacity-70">
-                        <img v-if="userAvatar" :src="userAvatar" class="w-6 h-6 rounded-full">
-                        <span>{{ userEmail }}</span>
+                        <span class="badge badge-neutral">{{ userName }}</span>
                     </div>
                     <button class="btn btn-ghost btn-sm" @click="currentTab === 'results' ? fetchResults() : fetchAuditLogs()">重新整理</button>
                     <button class="btn btn-ghost btn-sm" @click="logout">登出</button>
@@ -299,18 +294,17 @@
 <script>
 const { createApp, ref, computed, onMounted } = Vue;
 
-// 允許的管理員網域
-const ALLOWED_DOMAINS = ['yesiang.com'];
-
 createApp({
     setup() {
         const API_URL = 'https://smai-mcp-center.onrender.com/api/recruit';
+        const SSO_API_URL = 'https://smai-mcp-center.onrender.com/api/sso/pin';
 
-        const clerkLoading = ref(true);
         const isLoggedIn = ref(false);
         const loginError = ref('');
-        const userEmail = ref('');
-        const userAvatar = ref('');
+        const loginLoading = ref(false);
+        const employeeId = ref('');
+        const pin = ref('');
+        const userName = ref('');
         const loading = ref(false);
         const currentTab = ref('results');
         const results = ref([]);
@@ -321,7 +315,7 @@ createApp({
         const reviewNotes = ref('');
         const detailModal = ref(null);
 
-        let clerk = null;
+        let ssoToken = null;
 
         const positions = computed(() => {
             const posSet = new Set(results.value.map(r => r.position));
@@ -336,53 +330,102 @@ createApp({
             });
         });
 
-        const checkAuth = () => {
-            if (!clerk?.user) {
-                isLoggedIn.value = false;
-                return;
+        // 驗證已存在的 Token
+        const verifyToken = async (token) => {
+            try {
+                const res = await fetch(`${SSO_API_URL}/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                const data = await res.json();
+                return data.success;
+            } catch (e) {
+                return false;
             }
-            const email = clerk.user.primaryEmailAddress?.emailAddress || '';
-            const domain = email.split('@')[1];
-            if (ALLOWED_DOMAINS.includes(domain)) {
-                isLoggedIn.value = true;
-                userEmail.value = email;
-                userAvatar.value = clerk.user.imageUrl || '';
-                fetchResults();
-            } else {
-                loginError.value = `${email} 無管理權限`;
-                clerk.signOut();
+        };
+
+        // 檢查現有 session
+        const checkExistingSession = async () => {
+            const token = localStorage.getItem('sso_token');
+            const user = localStorage.getItem('sso_user');
+            if (token && user) {
+                const valid = await verifyToken(token);
+                if (valid) {
+                    ssoToken = token;
+                    const userData = JSON.parse(user);
+                    userName.value = userData.name || userData.employee_id;
+                    isLoggedIn.value = true;
+                    fetchResults();
+                } else {
+                    localStorage.removeItem('sso_token');
+                    localStorage.removeItem('sso_user');
+                }
             }
         };
 
         const login = async () => {
             loginError.value = '';
+
+            if (!employeeId.value.trim() || !pin.value.trim()) {
+                loginError.value = '請輸入員工編號和 PIN 碼';
+                return;
+            }
+
+            loginLoading.value = true;
+
             try {
-                await clerk.openSignIn();
+                const res = await fetch(`${SSO_API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        employee_id: employeeId.value.trim(),
+                        pin: pin.value.trim()
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    ssoToken = data.data.token;
+                    localStorage.setItem('sso_token', data.data.token);
+                    localStorage.setItem('sso_user', JSON.stringify(data.data.user));
+                    userName.value = data.data.user.name || data.data.user.employee_id;
+                    isLoggedIn.value = true;
+                    employeeId.value = '';
+                    pin.value = '';
+                    fetchResults();
+                } else {
+                    loginError.value = data.detail || data.message || '登入失敗';
+                }
             } catch (err) {
-                loginError.value = '登入失敗';
+                console.error('Login error:', err);
+                loginError.value = '系統連線失敗，請稍後再試';
+            } finally {
+                loginLoading.value = false;
             }
         };
 
-        const logout = async () => {
-            await clerk?.signOut();
+        const logout = () => {
+            localStorage.removeItem('sso_token');
+            localStorage.removeItem('sso_user');
+            ssoToken = null;
             isLoggedIn.value = false;
-            userEmail.value = '';
-            userAvatar.value = '';
+            userName.value = '';
         };
 
         // 取得認證 headers
-        const getAuthHeaders = async () => {
-            const token = await clerk?.session?.getToken();
+        const getAuthHeaders = () => {
             return {
                 'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : ''
+                'Authorization': ssoToken ? `Bearer ${ssoToken}` : ''
             };
         };
 
         const fetchResults = async () => {
             loading.value = true;
             try {
-                const headers = await getAuthHeaders();
+                const headers = getAuthHeaders();
                 const res = await fetch(`${API_URL}/results`, { headers });
                 const data = await res.json();
                 if (data.success) {
@@ -401,7 +444,7 @@ createApp({
         const fetchAuditLogs = async () => {
             loading.value = true;
             try {
-                const headers = await getAuthHeaders();
+                const headers = getAuthHeaders();
                 const res = await fetch(`${API_URL}/audit-logs`, { headers });
                 const data = await res.json();
                 if (data.success) {
@@ -416,7 +459,7 @@ createApp({
 
         const viewDetail = async (id) => {
             try {
-                const headers = await getAuthHeaders();
+                const headers = getAuthHeaders();
                 const res = await fetch(`${API_URL}/results/${id}`, { headers });
                 const data = await res.json();
                 if (data.success) {
@@ -432,7 +475,7 @@ createApp({
         const updateStatus = async (status) => {
             if (!selectedResult.value) return;
             try {
-                const headers = await getAuthHeaders();
+                const headers = getAuthHeaders();
                 const res = await fetch(`${API_URL}/results/${selectedResult.value.id}/review`, {
                     method: 'PATCH',
                     headers,
@@ -489,50 +532,17 @@ createApp({
             }
         };
 
-        onMounted(async () => {
-            try {
-                // 等待 Clerk 載入（最多 10 秒）
-                let attempts = 0;
-                while (!window.Clerk && attempts < 100) {
-                    await new Promise(r => setTimeout(r, 100));
-                    attempts++;
-                }
-
-                if (!window.Clerk) {
-                    loginError.value = 'Clerk 載入失敗，請重新整理';
-                    clerkLoading.value = false;
-                    return;
-                }
-
-                clerk = window.Clerk;
-                await clerk.load();
-
-                // 監聽登入狀態變化
-                clerk.addListener(({ user }) => {
-                    if (user) {
-                        checkAuth();
-                    } else {
-                        isLoggedIn.value = false;
-                    }
-                });
-
-                clerkLoading.value = false;
-                if (clerk.user) {
-                    checkAuth();
-                }
-            } catch (err) {
-                console.error('Clerk init error:', err);
-                loginError.value = '初始化失敗，請重新整理';
-                clerkLoading.value = false;
-            }
+        onMounted(() => {
+            checkExistingSession();
         });
 
         return {
-            clerkLoading,
             isLoggedIn,
             loginError,
-            userEmail,
-            userAvatar,
+            loginLoading,
+            employeeId,
+            pin,
+            userName,
             loading,
             currentTab,
             results,
