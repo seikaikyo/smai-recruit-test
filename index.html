@@ -1347,8 +1347,7 @@ createApp({
             return arr;
         };
 
-        // API URL
-        const API_URL = 'https://smai-mcp-center.onrender.com/api/recruit';
+        // 資料儲存: PGlite (瀏覽器本地 IndexedDB)
 
         // Positions
         const positions = ref([
@@ -3236,11 +3235,10 @@ jobs:
                     answer: q.options ? q.options[challengeAnswers.value[idx]] : challengeAnswers.value[idx]
                 }));
 
-                // 提交到後端 (使用 snake_case)
-                const response = await fetch(`${API_URL}/submit`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                // 提交到本地 PGlite 資料庫
+                try {
+                    const { submitTest } = await import('./src/db/recruit-db.js');
+                    await submitTest({
                         name: userName.value,
                         email: userEmail.value || '',
                         phone: userPhone.value || null,
@@ -3253,12 +3251,9 @@ jobs:
                         behavior_pattern: behaviorStats.value.pattern,
                         answers: answersData,
                         challenge_answers: challengeData
-                    })
-                });
-
-                if (!response.ok) {
-                    const err = await response.json().catch(() => ({}));
-                    console.warn('提交警告:', err);
+                    });
+                } catch (dbErr) {
+                    console.warn('PGlite 提交失敗:', dbErr);
                     // 即使提交失敗也顯示結果（避免考生困惑）
                 }
 

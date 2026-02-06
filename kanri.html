@@ -21,7 +21,7 @@
         <div class="card bg-base-100 shadow-xl w-96">
             <div class="card-body">
                 <h2 class="card-title justify-center mb-4">SMAI 測驗管理後台</h2>
-                <p class="text-sm opacity-70 mb-4 text-center">請使用 SSO PIN 登入</p>
+                <p class="text-sm opacity-70 mb-4 text-center">請輸入管理員帳號登入 (預設: admin / 123456)</p>
                 <div v-if="loginError" class="alert alert-error text-sm mb-4">{{ loginError }}</div>
                 <div class="form-control">
                     <label class="label"><span class="label-text">員工編號</span></label>
@@ -291,14 +291,17 @@
     </dialog>
 </div>
 
-<script>
+<script type="module">
+import {
+    initDB, loginWithPin, verifySession,
+    getResults as dbGetResults, getResultById,
+    updateReview, getAuditLogs as dbGetAuditLogs
+} from './src/db/recruit-db.js';
+
 const { createApp, ref, computed, onMounted } = Vue;
 
 createApp({
     setup() {
-        const API_URL = 'https://smai-mcp-center.onrender.com/api/recruit';
-        const SSO_API_URL = 'https://smai-mcp-center.onrender.com/api/sso/pin';
-
         const isLoggedIn = ref(false);
         const loginError = ref('');
         const loginLoading = ref(false);
@@ -306,6 +309,7 @@ createApp({
         const pin = ref('');
         const userName = ref('');
         const loading = ref(false);
+        const dbReady = ref(false);
         const currentTab = ref('results');
         const results = ref([]);
         const auditLogs = ref([]);
@@ -314,8 +318,6 @@ createApp({
         const selectedResult = ref(null);
         const reviewNotes = ref('');
         const detailModal = ref(null);
-
-        let ssoToken = null;
 
         const positions = computed(() => {
             const posSet = new Set(results.value.map(r => r.position));
@@ -330,26 +332,27 @@ createApp({
             });
         });
 
-        // 驗證已存在的 Token
-        const verifyToken = async (token) => {
-            try {
-                const res = await fetch(`${SSO_API_URL}/verify`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token })
-                });
-                const data = await res.json();
-                return data.success;
-            } catch (e) {
-                return false;
-            }
-        };
-
-        // SSO 已停用 - Render 後端暫停中，自動登入
+        // 初始化 PGlite 並檢查登入狀態
         const checkExistingSession = async () => {
-            userName.value = 'Dev User';
-            isLoggedIn.value = true;
-            fetchResults();
+            loading.value = true;
+            try {
+                await initDB();
+                dbReady.value = true;
+            } catch (err) {
+                console.error('PGlite 初始化失敗:', err);
+                loginError.value = '資料庫初始化失敗，請重新整理頁面';
+                loading.value = false;
+                return;
+            }
+
+            // 檢查 localStorage 中是否有 session
+            if (verifySession()) {
+                const user = JSON.parse(localStorage.getItem('sso_user') || '{}');
+                userName.value = user.name || user.employee_id || '';
+                isLoggedIn.value = true;
+                await fetchResults();
+            }
+            loading.value = false;
         };
 
         const login = async () => {
@@ -363,19 +366,9 @@ createApp({
             loginLoading.value = true;
 
             try {
-                const res = await fetch(`${SSO_API_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        employee_id: employeeId.value.trim(),
-                        pin: pin.value.trim()
-                    })
-                });
-
-                const data = await res.json();
+                const data = await loginWithPin(employeeId.value.trim(), pin.value.trim());
 
                 if (data.success) {
-                    ssoToken = data.data.token;
                     localStorage.setItem('sso_token', data.data.token);
                     localStorage.setItem('sso_user', JSON.stringify(data.data.user));
                     userName.value = data.data.user.name || data.data.user.employee_id;
@@ -384,11 +377,11 @@ createApp({
                     pin.value = '';
                     fetchResults();
                 } else {
-                    loginError.value = data.detail || data.message || '登入失敗';
+                    loginError.value = data.message || '登入失敗';
                 }
             } catch (err) {
                 console.error('Login error:', err);
-                loginError.value = '系統連線失敗，請稍後再試';
+                loginError.value = '登入失敗，請確認帳號密碼';
             } finally {
                 loginLoading.value = false;
             }
@@ -397,30 +390,16 @@ createApp({
         const logout = () => {
             localStorage.removeItem('sso_token');
             localStorage.removeItem('sso_user');
-            ssoToken = null;
             isLoggedIn.value = false;
             userName.value = '';
-        };
-
-        // 取得認證 headers
-        const getAuthHeaders = () => {
-            return {
-                'Content-Type': 'application/json',
-                'Authorization': ssoToken ? `Bearer ${ssoToken}` : ''
-            };
         };
 
         const fetchResults = async () => {
             loading.value = true;
             try {
-                const headers = getAuthHeaders();
-                const res = await fetch(`${API_URL}/results`, { headers });
-                const data = await res.json();
+                const data = await dbGetResults();
                 if (data.success) {
                     results.value = data.data;
-                } else if (res.status === 401 || res.status === 403) {
-                    loginError.value = '認證已過期，請重新登入';
-                    logout();
                 }
             } catch (err) {
                 console.error('Failed to fetch results:', err);
@@ -432,9 +411,7 @@ createApp({
         const fetchAuditLogs = async () => {
             loading.value = true;
             try {
-                const headers = getAuthHeaders();
-                const res = await fetch(`${API_URL}/audit-logs`, { headers });
-                const data = await res.json();
+                const data = await dbGetAuditLogs();
                 if (data.success) {
                     auditLogs.value = data.data;
                 }
@@ -447,9 +424,7 @@ createApp({
 
         const viewDetail = async (id) => {
             try {
-                const headers = getAuthHeaders();
-                const res = await fetch(`${API_URL}/results/${id}`, { headers });
-                const data = await res.json();
+                const data = await getResultById(id);
                 if (data.success) {
                     selectedResult.value = data.data;
                     reviewNotes.value = data.data.reviewer_notes || '';
@@ -463,16 +438,9 @@ createApp({
         const updateStatus = async (status) => {
             if (!selectedResult.value) return;
             try {
-                const headers = getAuthHeaders();
-                const res = await fetch(`${API_URL}/results/${selectedResult.value.id}/review`, {
-                    method: 'PATCH',
-                    headers,
-                    body: JSON.stringify({
-                        status,
-                        reviewer_notes: reviewNotes.value
-                    })
-                });
-                const data = await res.json();
+                const data = await updateReview(
+                    selectedResult.value.id, status, reviewNotes.value
+                );
                 if (data.success) {
                     detailModal.value?.close();
                     fetchResults();
@@ -532,6 +500,7 @@ createApp({
             pin,
             userName,
             loading,
+            dbReady,
             currentTab,
             results,
             auditLogs,

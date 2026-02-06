@@ -1,5 +1,13 @@
 {
   "name": "smai-recruit-test",
   "type": "module",
-  "private": true
+  "private": true,
+  "description": "SMAI 技術人才測驗系統 - PGlite 本地資料庫版本",
+  "scripts": {
+    "dev": "npx serve . -l 3000",
+    "dev:demo": "npx serve . -l 3000"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.2.0"
+  }
 }
