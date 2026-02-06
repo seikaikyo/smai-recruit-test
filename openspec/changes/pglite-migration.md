@@ -1,7 +1,7 @@
 ---
 title: PGlite 遷移 - 脫離 Render 後端
 type: refactor
-status: in-progress
+status: completed
 created: 2026-02-06
 ---
 
@@ -116,11 +116,9 @@ SSO 依賴外部服務，改為本地 PIN 驗證：
 
 ## Checklist
 
-- [ ] 安裝 PGlite 依賴 (`@electric-sql/pglite`)
-- [ ] 建立 db/client.js + schema.sql + seed.js
-- [ ] 建立 services/recruit-local.js
-- [ ] 建立 auth/local-auth.js
-- [ ] 改寫 index.html 的提交邏輯
-- [ ] 改寫 kanri.html 的所有 API 呼叫
-- [ ] 移除對 smai-mcp-center 的依賴
-- [ ] E2E 測試
+- [x] PGlite CDN 載入 (cdn.jsdelivr.net)
+- [x] 建立 src/db/recruit-db.js (整合 schema + seed + CRUD + auth)
+- [x] 改寫 index.html 的提交邏輯 (dynamic import)
+- [x] 改寫 kanri.html 的所有 API 呼叫 (ES module import)
+- [x] 移除對 smai-mcp-center 的依賴
+- [ ] E2E 測試 (待 Vercel 部署完成)
