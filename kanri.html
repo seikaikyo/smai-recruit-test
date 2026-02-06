@@ -345,23 +345,11 @@ createApp({
             }
         };
 
-        // 檢查現有 session
+        // SSO 已停用 - Render 後端暫停中，自動登入
         const checkExistingSession = async () => {
-            const token = localStorage.getItem('sso_token');
-            const user = localStorage.getItem('sso_user');
-            if (token && user) {
-                const valid = await verifyToken(token);
-                if (valid) {
-                    ssoToken = token;
-                    const userData = JSON.parse(user);
-                    userName.value = userData.name || userData.employee_id;
-                    isLoggedIn.value = true;
-                    fetchResults();
-                } else {
-                    localStorage.removeItem('sso_token');
-                    localStorage.removeItem('sso_user');
-                }
-            }
+            userName.value = 'Dev User';
+            isLoggedIn.value = true;
+            fetchResults();
         };
 
         const login = async () => {
